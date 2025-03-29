@@ -17,7 +17,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"archit.Archit"
+			"archit.mod.ArchitMod"
 		]
 	},
 	"mixins": [
