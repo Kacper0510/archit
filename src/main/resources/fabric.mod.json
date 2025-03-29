@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "archit",
+	"version": "${version}",
+	"name": "archit",
+	"description": "AGH UST compilers project",
+	"authors": [
+		"Kacper0510",
+		"Yeetoo45",
+		"Atras19"
+	],
+	"contact": {
+		"sources": "https://github.com/Kacper0510/archit"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/archit/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"archit.Archit"
+		]
+	},
+	"mixins": [
+		"archit.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": "~1.21.5",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {}
+}
