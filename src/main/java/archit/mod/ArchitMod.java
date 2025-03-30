@@ -15,6 +15,6 @@ public class ArchitMod implements ModInitializer {
         // However, some things (like resources) may still be uninitialized.
         // Proceed with mild caution.
 
-        LOGGER.info(Utils.TEST_MESSAGE);
+        LOGGER.info(Utils.test());
     }
 }

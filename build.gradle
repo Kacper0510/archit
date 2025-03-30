@@ -1,13 +1,21 @@
 plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
+	id 'com.gradleup.shadow' version '8.3.6'
 	id 'application'
+	id 'antlr'
 }
 
 version = project.mod_version
 group = project.maven_group
 
 application {
-    mainClassName = project.app_main
+    mainClass = project.app_main
+}
+
+generateGrammarSource {
+	arguments += [
+		"-package", "archit.parser"
+	]
 }
 
 base {
@@ -24,6 +32,10 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// Antlr
+	antlr "org.antlr:antlr4:${project.antlr_version}"
+	implementation "org.antlr:antlr4-runtime:${project.antlr_version}"
 }
 
 processResources {
@@ -38,6 +50,24 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
 }
 
+tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+	// Bundle only antlr4-runtime
+	dependencies {
+		exclude {
+			it.moduleName != 'antlr4-runtime'
+		}
+	}
+	// Exclude the default mappings
+	exclude "mappings/*"
+	// Overwrite the default jar file
+	archiveClassifier = ''
+}
+
+// Explicitly set the remapJar task to run before shadowJar
+tasks.named('startShadowScripts') {
+    mustRunAfter(tasks.named('remapJar'))
+}
+
 java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
@@ -45,10 +75,6 @@ java {
 
 jar {
 	inputs.property "archivesName", project.base.archivesName
-
-	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}"}
-	}
 
 	manifest {
 		attributes(
