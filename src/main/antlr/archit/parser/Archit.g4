@@ -11,8 +11,8 @@ statement
     ;
 
 printStat: 'print' (STRING | '(' STRING ')') ';' ;
-moveStat: 'move' '$' ID ';' ;
-placeStat: 'place' ( 'minecraft:' ID | ':' ID ) ';' ;
+moveStat: 'move' ( '$' ID | '(' '$' ID ')' ) ';' ;
+placeStat: 'place' ( 'minecraft:' ID | ':' ID | '(' 'minecraft:' ID ')' | '(' ':' ID ')' ) ';' ;
 
 //Tokeny
 STRING: '\'' (~['\\] | '\\' .)* '\'' ;
