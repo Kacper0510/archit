@@ -54,7 +54,7 @@ public class Archit implements ModInitializer {
 			String content = Files.readString(scriptPath);
 			source.sendFeedback(() -> Text.literal("Content: " + scriptName + ":\n" + content), false);
 		} catch (IOException e) {
-			source.sendFeedback(() -> Text.literal("Failed to load file: " + e.getMessage()), false);
+			source.sendFeedback(() -> Text.literal("Failed to load the file: " + e.getMessage()), false);
 		}
 
 		return ControlFlowAware.Command.SINGLE_SUCCESS;
