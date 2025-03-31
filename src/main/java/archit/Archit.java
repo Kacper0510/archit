@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.ControlFlowAware;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -43,7 +44,8 @@ public class Archit implements ModInitializer {
 	}
 
 	private int runScript(ServerCommandSource source, String scriptName) {
-		Path scriptPath = Path.of("C:\\Users\\dawid\\AppData\\Roaming\\.minecraft\\archit-scripts", scriptName);
+		Path gameDir = FabricLoader.getInstance().getGameDir();
+		Path scriptPath = gameDir.resolve("archit-scripts").resolve(scriptName);
 
 		if (!Files.exists(scriptPath)) {
 			source.sendFeedback(() -> Text.literal("File does not exist: " + scriptPath), false);
