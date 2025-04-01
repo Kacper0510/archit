@@ -14,7 +14,7 @@ application {
 
 generateGrammarSource {
 	arguments += [
-		"-package", "archit.parser"
+		"-package", "archit.parser", "-visitor"
 	]
 }
 
