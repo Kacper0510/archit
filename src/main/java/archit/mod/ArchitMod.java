@@ -19,6 +19,8 @@ public class ArchitMod implements ModInitializer {
     public static final String MOD_ID = "archit";
     public static final Logger LOGGER = LoggerFactory.getLogger("archit");
 
+    public static Path scriptDirectory;
+
     @Override
     public void onInitialize() {
         // This code runs as soon as Minecraft is in a mod-load-ready state.
@@ -27,19 +29,21 @@ public class ArchitMod implements ModInitializer {
 
         LOGGER.info(Utils.test());
 
+        scriptDirectory = FabricLoader.getInstance().getGameDir().resolve("archit-scripts");
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(CommandManager.literal("script").then(CommandManager.literal("run").then(
+            dispatcher.register(CommandManager.literal("archit").then(CommandManager.literal("run").then(
                 CommandManager.argument("name", StringArgumentType.string())
+                    .suggests(new ScriptPathSuggestions())
                     .executes(context -> runScript(context.getSource(), StringArgumentType.getString(context, "name")))
             )));
         });
     }
 
     private int runScript(ServerCommandSource source, String scriptName) {
-        Path gameDir = FabricLoader.getInstance().getGameDir();
-        Path scriptPath = gameDir.resolve("archit-scripts").resolve(scriptName);
+        Path scriptPath = scriptDirectory.resolve(scriptName);
 
-        if (!Files.exists(scriptPath)) {
+        if (!Files.exists(scriptPath) || !Files.isRegularFile(scriptPath)) {
             source.sendFeedback(() -> Text.literal("File does not exist: " + scriptPath), false);
             return 0;
         }

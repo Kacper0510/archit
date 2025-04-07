@@ -1,0 +1,3 @@
+move $negy;
+place :diamond_block;
+print 'Hello world';

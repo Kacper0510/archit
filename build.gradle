@@ -68,6 +68,20 @@ tasks.named('startShadowScripts') {
     mustRunAfter(tasks.named('remapJar'))
 }
 
+tasks.register('copyExamples', Copy) {
+    from 'examples'
+    into 'run/archit-scripts'
+	rename('(.*)', 'example_$1')
+}
+
+tasks.named('runClient') {
+    dependsOn 'copyExamples'
+}
+
+tasks.named('runServer') {
+    dependsOn 'copyExamples'
+}
+
 java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
