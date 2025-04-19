@@ -94,6 +94,10 @@ functionParam
     : ID ':' type
     ;
 
+// Comments
+COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
+
+LINE_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
 
 
 // Tokens
