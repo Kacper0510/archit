@@ -5,7 +5,8 @@ program: statement+;
 
 // Statements
 statement
-    : functionCall ';'
+    : functionDecl
+    | functionCall ';'
     | functionCallNoBrackets ';'
     | varDecl
     | assignStat
@@ -77,6 +78,23 @@ continueStat: 'continue' ';';
 // Function calls
 functionCall: ID '(' (expr (',' expr)*)? ')';
 functionCallNoBrackets: ID (expr (',' expr)*)?;
+
+// Function declarations
+functionDecl
+    : 'function' ID '(' functionParams? ')' ':' type '{' statement* '}'
+    ;
+
+// Function parameter list
+functionParams
+    : functionParam (',' functionParam)*
+    ;
+
+// Single function parameter: name and type
+functionParam
+    : ID ':' type
+    ;
+
+
 
 // Tokens
 STRING: '\'' (~['\\] | '\\' .)* '\'';
