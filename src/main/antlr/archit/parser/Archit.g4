@@ -9,11 +9,18 @@ statement
     | moveStat
     | placeStat
     | varDecl
+    | assignStat       
     | ifStat
+    | whileStat         
+    | repeatStat        
+    | breakStat         
+    | continueStat      
     ;
 
-// Deklaracje zmiennych
+// Deklaracje i przypisywanie zmiennych
 varDecl: 'var' ID ':' type '=' expr ';' ;
+assignStat: ID '=' expr ';' ;
+
 
 type: 'number' | 'real' | 'logic' | 'string' | 'material' | listType | mapType | enumType;
 
@@ -50,6 +57,11 @@ enumExpr: '$' ID;
 printStat: 'print' (STRING | '(' STRING ')') ';' ;
 moveStat: 'move' ( '$' ID | '(' '$' ID ')' ) ';' ;
 placeStat: 'place' ( 'minecraft:' ID | ':' ID | '(' 'minecraft:' ID ')' | '(' ':' ID ')' ) ';' ;
+whileStat: 'while' expr '{' statement+ '}' ;
+repeatStat: 'repeat' expr '{' statement+ '}' ;
+breakStat: 'break' ';' ;
+continueStat: 'continue' ';' ;
+
 
 // Tokeny
 STRING: '\'' (~['\\] | '\\' .)* '\'' ;
