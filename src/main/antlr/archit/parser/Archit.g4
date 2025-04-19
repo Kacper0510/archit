@@ -13,7 +13,12 @@ statement:
 	| whileStat
 	| repeatStat
 	| breakStat
-	| continueStat;
+	| continueStat
+	| returnStat
+	| scopeStat;
+
+returnStat: 'return' expr ';';
+scopeStat: '{' statement+ '}';
 
 // Variables
 varDecl:
@@ -56,12 +61,13 @@ expr:
 	| expr ('==' | '!=' | '>' | '>=' | '<' | '<=') expr
 	| expr ('and' | 'or') expr
 	| 'not' expr
+	| expr '[' expr ']'
 	| functionCall;
 
-listExpr: '[' (expr (',' expr)*)? ']';
+listExpr: '[' (expr (',' expr)*)? ']' | '#' materialExpr;
 mapExpr: '|' (expr '->' expr (',' expr '->' expr)*)? '|';
 enumExpr: '$' ID;
-materialExpr: (ID ':' ID | ':' ID);
+materialExpr: ID ':' ID | ':' ID;
 
 // Loops
 whileStat:
