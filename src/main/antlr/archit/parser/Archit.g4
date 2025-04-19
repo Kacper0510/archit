@@ -1,7 +1,7 @@
 grammar Archit;
 
 // Initial rule
-program: statement+;
+program: statement*;
 
 // Statements
 statement
@@ -19,11 +19,11 @@ statement
     | scopeStat;
 
 returnStat: 'return' expr ';';
-scopeStat: '{' statement+ '}';
+scopeStat: '{' statement* '}';
 
 // Variables
 varDecl: 'var' ID ':' type '=' (expr | functionCallNoBrackets) ';';
-assignStat: ID '=' (expr | functionCallNoBrackets) ';';
+assignStat: ID ASSIGNMENT (expr | functionCallNoBrackets) ';';
 
 type
     : 'number'
@@ -41,9 +41,9 @@ enumType: '<' ID (',' ID)* '>';
 
 // If
 ifStat
-    : 'if' (expr | functionCallNoBrackets) '{' statement+ '}' (
-        'else if' (expr | functionCallNoBrackets) '{' statement+ '}'
-    )* ('else' '{' statement+ '}')?;
+    : 'if' (expr | functionCallNoBrackets) scopeStat (
+        'else if' (expr | functionCallNoBrackets) scopeStat
+    )* ('else' scopeStat)?;
 
 // Expressions
 expr
@@ -57,9 +57,7 @@ expr
     | enumExpr
     | ID
     | '(' expr ')'
-    | expr ('+' | '-' | '*' | '/' | '^' | '%') expr
-    | expr ('==' | '!=' | '>' | '>=' | '<' | '<=') expr
-    | expr ('and' | 'or') expr
+    | expr BINARY_OP expr
     | 'not' expr
     | expr '[' expr ']'
     | functionCall;
@@ -70,8 +68,8 @@ enumExpr: '$' ID;
 materialExpr: ID ':' ID | ':' ID;
 
 // Loops
-whileStat: 'while' (expr | functionCallNoBrackets) '{' statement+ '}';
-repeatStat: 'repeat' (expr | functionCallNoBrackets) '{' statement+ '}';
+whileStat: 'while' (expr | functionCallNoBrackets) scopeStat;
+repeatStat: 'repeat' (expr | functionCallNoBrackets) scopeStat;
 breakStat: 'break' ';';
 continueStat: 'continue' ';';
 
@@ -80,30 +78,38 @@ functionCall: ID '(' (expr (',' expr)*)? ')';
 functionCallNoBrackets: ID (expr (',' expr)*)?;
 
 // Function declarations
-functionDecl
-    : 'function' ID '(' functionParams? ')' ':' type '{' statement* '}'
-    ;
+functionDecl: 'function' ID '(' functionParams? ')' (':' type)? scopeStat;
 
 // Function parameter list
-functionParams
-    : functionParam (',' functionParam)*
-    ;
+functionParams: functionParam (',' functionParam)*;
 
 // Single function parameter: name and type
-functionParam
-    : ID ':' type
-    ;
+functionParam: ID ':' type;
 
 // Comments
 COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
-
 LINE_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
 
-
 // Tokens
-STRING: '\'' (~['\\] | '\\' .)* '\'';
+STRING: ['"] (~['\\] | '\\' .)* ['"];
 NUMBER: [0-9]([0-9_]* [0-9])?;
 REAL: [0-9]([0-9_]* [0-9])? '.' [0-9]([0-9_]* [0-9])? ( [eE] [-+]? [0-9]+)?;
 LOGIC: 'true' | 'false';
+BINARY_OP
+    : '+'
+    | '-'
+    | '*'
+    | '/'
+    | '^'
+    | '%'
+    | '=='
+    | '!='
+    | '>'
+    | '>='
+    | '<'
+    | '<='
+    | 'and'
+    | 'or';
+ASSIGNMENT: '=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=';
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 WS: [ \t\r\n]+ -> skip;
