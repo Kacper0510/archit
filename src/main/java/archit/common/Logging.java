@@ -7,10 +7,10 @@ public interface Logging {
     void systemInfo(String format, Object... objects);
     void systemError(String format, Object... objects);
     void systemError(Throwable t, String format, Object... objects);
-    void scriptInfo(ScriptRun run, String format, Object... objects);
+    void scriptPrint(ScriptRun run, String text);
     void scriptError(ScriptRun run, String format, Object... objects);
 
-    public static List<String> parseFormatAndSubstitute(String format, Object... objects) {
+    default List<String> parseFormatAndSubstitute(String format, Object... objects) {
         var split = format.split("\\{\\}");
         if (split.length + 1 != objects.length) {
             throw new IllegalArgumentException("Number of arguments does not match number of placeholders");

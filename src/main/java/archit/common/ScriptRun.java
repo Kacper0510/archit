@@ -2,26 +2,33 @@ package archit.common;
 
 public class ScriptRun {
     /**
-     * Source of the current run. In Minecraft mode - {@link net.minecraft.server.command.ServerCommandSource},
+     * Metadata of the current run - its additional implementation specific details.
+     * In Minecraft mode - {@link net.minecraft.server.command.ServerCommandSource},
      * in console mode - null.
      */
-    private final Object source;
+    private final Object metadata;
     private final Interpreter interpreter;
+    private final String scriptLocation;
 
-    public ScriptRun(Interpreter interpreter, Object source) {
+    public ScriptRun(Interpreter interpreter, String file, Object metadata) {
         this.interpreter = interpreter;
-        this.source = source;
+        this.metadata = metadata;
+        this.scriptLocation = file;
     }
 
-    public ScriptRun(Interpreter interpreter) {
-        this(interpreter, null);
+    public ScriptRun(Interpreter interpreter, String file) {
+        this(interpreter, file, null);
     }
 
-    public Object getSource() {
-        return source;
+    public Object getMetadata() {
+        return metadata;
     }
 
     public Interpreter getInterpreter() {
         return interpreter;
+    }
+
+    public String getScriptLocation() {
+        return scriptLocation;
     }
 }
