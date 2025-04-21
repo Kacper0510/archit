@@ -36,6 +36,9 @@ dependencies {
 	// Antlr
 	antlr "org.antlr:antlr4:${project.antlr_version}"
 	implementation "org.antlr:antlr4-runtime:${project.antlr_version}"
+
+	// Command line interface dependencies
+	implementation "org.fusesource.jansi:jansi:${project.jansi_version}"
 }
 
 processResources {
@@ -50,11 +53,13 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
 }
 
+def shadowJarPackedDeps = ['antlr4-runtime', 'jansi']
+
 tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
 	// Bundle only antlr4-runtime
 	dependencies {
 		exclude {
-			it.moduleName != 'antlr4-runtime'
+			!shadowJarPackedDeps.contains(it.moduleName)
 		}
 	}
 	// Exclude the default mappings
@@ -66,6 +71,20 @@ tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.Shadow
 // Explicitly set the remapJar task to run before shadowJar
 tasks.named('startShadowScripts') {
     mustRunAfter(tasks.named('remapJar'))
+}
+
+tasks.register('copyExamples', Copy) {
+    from 'examples'
+    into 'run/archit-scripts'
+	rename('(.*)', 'example_$1')
+}
+
+tasks.named('runClient') {
+    dependsOn 'copyExamples'
+}
+
+tasks.named('runServer') {
+    dependsOn 'copyExamples'
 }
 
 java {
