@@ -11,8 +11,8 @@ public interface Logging {
     void scriptError(ScriptRun run, String format, Object... objects);
 
     default List<String> parseFormatAndSubstitute(String format, Object... objects) {
-        var split = format.split("\\{\\}");
-        if (split.length + 1 != objects.length) {
+        var split = (format + " ").split("\\{\\}");
+        if (split.length - 1 != objects.length) {
             throw new IllegalArgumentException("Number of arguments does not match number of placeholders");
         }
         var result = new ArrayList<String>();
