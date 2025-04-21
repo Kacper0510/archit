@@ -87,6 +87,10 @@ tasks.named('runServer') {
     dependsOn 'copyExamples'
 }
 
+tasks.named('run') {
+	systemProperty "jansi.force", "true"
+}
+
 java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
