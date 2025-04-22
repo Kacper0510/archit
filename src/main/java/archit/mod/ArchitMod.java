@@ -35,12 +35,18 @@ public class ArchitMod implements ModInitializer {
                 CommandManager.argument("name", StringArgumentType.string())
                     .requires(source -> source.hasPermissionLevel(2))
                     .suggests(new ScriptPathSuggestions(this))
-                    .executes(context -> runScript(context.getSource(), StringArgumentType.getString(context, "name")))
+                    .executes(context -> {
+                        try {
+                            return runScript(context.getSource(), StringArgumentType.getString(context, "name"));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
             )));
         });
     }
 
-    private int runScript(ServerCommandSource source, String scriptName) {
+    private int runScript(ServerCommandSource source, String scriptName) throws IOException {
         Path scriptPath = scriptDirectory.resolve(scriptName);
         var run = new ScriptRun(interpreter, scriptPath, source);
         interpreter.getCurrentRuns().add(run);
