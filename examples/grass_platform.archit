@@ -1,0 +1,14 @@
+move -25, 0, -25;
+
+repeat 50 {
+    repeat 50 {
+        place minecraft:grass_block;
+        move $posx;
+    }
+    repeat 50 {
+        move $negx;
+    }
+    move $posz;
+}
+
+print 'Platforma utworzona pomyślnie!';
