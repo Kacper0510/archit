@@ -2,7 +2,6 @@ package archit.mod;
 
 import archit.common.Interpreter;
 import archit.common.ScriptRun;
-
 import com.mojang.brigadier.arguments.StringArgumentType;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +24,7 @@ public class ArchitMod implements ModInitializer {
 
         scriptDirectory = FabricLoader.getInstance().getGameDir().resolve("archit-scripts");
         try {
-            Files.createDirectory(scriptDirectory);
+            Files.createDirectories(scriptDirectory);
         } catch (IOException e) {
             interpreter.getLogger().systemError(e, "Failed to create archit-scripts directory!");
         }
@@ -35,7 +34,9 @@ public class ArchitMod implements ModInitializer {
                 CommandManager.argument("name", StringArgumentType.string())
                     .requires(source -> source.hasPermissionLevel(2))
                     .suggests(new ScriptPathSuggestions(this))
-                    .executes(context -> runScript(context.getSource(), StringArgumentType.getString(context, "name")))
+                    .executes(context -> {
+                        return runScript(context.getSource(), StringArgumentType.getString(context, "name"));
+                    })
             )));
         });
     }

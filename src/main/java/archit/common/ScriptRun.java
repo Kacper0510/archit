@@ -1,5 +1,10 @@
 package archit.common;
 
+import archit.parser.ArchitLexer;
+import archit.parser.ArchitParser;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,12 +18,29 @@ public class ScriptRun {
     private final Object metadata;
     private final Interpreter interpreter;
     private final Path scriptLocation;
+    private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
+                                                        // chyba ze wywoływane z konsoli to domyslnie 0
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
+
+        if (metadata instanceof net.minecraft.server.command.ServerCommandSource source) {
+            var pos = source.getPosition();  // pozycja gracza bo to on wpisuje komende
+            this.cursorX = (int) pos.x;
+            this.cursorY = (int) pos.y;
+            this.cursorZ = (int) pos.z;
+        }
     }
+
+    // getter i setter dla wirtualnego kursora
+    public void setCursor(int x, int y, int z) {
+        this.cursorX = x; this.cursorY = y; this.cursorZ = z;
+    }
+    public int getCursorX() { return cursorX; }
+    public int getCursorY() { return cursorY; }
+    public int getCursorZ() { return cursorZ; }
 
     public ScriptRun(Interpreter interpreter, Path file) {
         this(interpreter, file, null);
@@ -50,27 +72,35 @@ public class ScriptRun {
             interpreter.getLogger().scriptError(this, "Script file is not readable!");
             return false;
         }
-        String content;
+        CharStream charStream;
         try {
-            content = Files.readString(scriptLocation);
+            charStream = CharStreams.fromPath(scriptLocation);
         } catch (IOException e) {
             interpreter.getLogger().systemError(e, "Failed to read the script even though it's readable?!");
             return false;
         }
 
-        // TODO emil
+        ArchitLexer lexer = new ArchitLexer(charStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        ArchitParser parser = new ArchitParser(tokens);
 
-        // przykładowe wywołania loggera - do usunięcia lub zakomentowania
-        interpreter.getLogger().systemInfo(
-            "Plik {} został uruchomiony!", scriptLocation
-        );  // trafi do konsoli MC lub do log.txt
-        interpreter.getLogger().scriptPrint(
-            this, "Tak będzie działać funkcja print!"
-        );  // trafi na chat MC lub do terminala
-        var firstLine = content.split("\n")[0];
-        interpreter.getLogger().scriptError(
-            this, "Pierwsza linijka to {} o długości {}", firstLine, firstLine.length()
-        );  // tak przekazujemy graczowi błędy
+        // usuwamy domyślne ErrorListenery i dodajemy nasze dla parsera i lexera
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ScriptErrorListener(this, interpreter.getLogger()));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ScriptErrorListener(this, interpreter.getLogger()));
+
+        try {
+            ArchitParser.ProgramContext tree = parser.program();
+
+            // stworzenie visitora i uruchomienie
+            ArchitVisitor visitor = new ArchitVisitor(interpreter, this);
+            visitor.visit(tree);
+
+        } catch (RuntimeException e) {
+            // zakonczenie metody run()
+            return false;
+        }
 
         return true;
     }
