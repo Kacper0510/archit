@@ -34,6 +34,13 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             case "print" -> {
                 if (!params.isEmpty()) {
                     String message = params.get(0).getText();
+                    if (message.length() >= 2) {
+                        char first = message.charAt(0);
+                        char last = message.charAt(message.length() - 1);
+                        if ((first == '\'' && last == '\'') || (first == '"' && last == '"')) {
+                            message = message.substring(1, message.length() - 1);
+                        }
+                    }
                     interpreter.builtinPrint(run, message);
                 }
             }
@@ -92,6 +99,9 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             case "place" -> {
                 if (!params.isEmpty()) {
                     String material = params.get(0).getText();
+                    if (material.startsWith(":")) {
+                        material = "minecraft" + material;
+                    }
                     interpreter.builtinPlace(run, material);
                 }
             }

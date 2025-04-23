@@ -10,7 +10,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.block.Block;
 
 public class Interpreter {
-    private List<ScriptRun> currentRuns = new ArrayList<>();
+    private final List<ScriptRun> currentRuns = new ArrayList<>();
     private final Logging logger;
     
     public Interpreter(Logging logger) {
@@ -44,8 +44,8 @@ public class Interpreter {
         if (meta instanceof ServerCommandSource src) {
             ServerWorld world = src.getWorld();
             Identifier id = Identifier.of(material);
-            Block block = Registries.BLOCK.get(id);
-            if (block != null) {
+            if (Registries.BLOCK.containsId(id)) {
+                Block block = Registries.BLOCK.get(id);
                 world.setBlockState(new BlockPos(run.getCursorX(), run.getCursorY(), run.getCursorZ()), block.getDefaultState());
             } else {
                 logger.scriptError(run, "Unknown block: {}", material);

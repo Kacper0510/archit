@@ -5,7 +5,6 @@ import archit.parser.ArchitParser;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,12 +18,20 @@ public class ScriptRun {
     private final Object metadata;
     private final Interpreter interpreter;
     private final Path scriptLocation;
-    private int cursorX = 0, cursorY = 0, cursorZ = 0;  // domyślne wartości wirtualnego kursora
+    private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
+                                                        // chyba ze wywoływane z konsoli to domyslnie 0
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
+
+        if (metadata instanceof net.minecraft.server.command.ServerCommandSource source) {
+            var pos = source.getPosition();  // pozycja gracza bo to on wpisuje komende
+            this.cursorX = (int) pos.x;
+            this.cursorY = (int) pos.y;
+            this.cursorZ = (int) pos.z;
+        }
     }
 
     // getter i setter dla wirtualnego kursora
