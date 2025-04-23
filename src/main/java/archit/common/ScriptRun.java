@@ -83,11 +83,24 @@ public class ScriptRun {
         ArchitLexer lexer = new ArchitLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         ArchitParser parser = new ArchitParser(tokens);
-        ArchitParser.ProgramContext tree = parser.program();
 
-        // stworzenie visitora i uruchomienie
-        ArchitVisitor visitor = new ArchitVisitor(interpreter, this);
-        visitor.visit(tree);
+        // usuwamy domyślne ErrorListenery i dodajemy nasze dla parsera i lexera
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ScriptErrorListener(this, interpreter.getLogger()));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ScriptErrorListener(this, interpreter.getLogger()));
+
+        try {
+            ArchitParser.ProgramContext tree = parser.program();
+
+            // stworzenie visitora i uruchomienie
+            ArchitVisitor visitor = new ArchitVisitor(interpreter, this);
+            visitor.visit(tree);
+
+        } catch (RuntimeException e) {
+            // zakonczenie metody run()
+            return false;
+        }
 
         return true;
     }
