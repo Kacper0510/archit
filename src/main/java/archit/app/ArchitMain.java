@@ -3,7 +3,6 @@ package archit.app;
 import archit.common.Interpreter;
 import archit.common.ScriptRun;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import org.fusesource.jansi.AnsiConsole;
 
@@ -21,13 +20,13 @@ public class ArchitMain {
         this.run = new ScriptRun(interpreter, Path.of(script));
     }
 
-    public void run() throws IOException {
+    public void run() {
         interpreter.getCurrentRuns().add(run);
         run.run();
         interpreter.getCurrentRuns().remove(run);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         AnsiConsole.systemInstall();
         new ArchitMain(args.length > 0 ? args[0] : null).run();
         AnsiConsole.systemUninstall();

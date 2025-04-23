@@ -2,7 +2,6 @@ package archit.mod;
 
 import archit.common.Interpreter;
 import archit.common.ScriptRun;
-
 import com.mojang.brigadier.arguments.StringArgumentType;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,17 +35,13 @@ public class ArchitMod implements ModInitializer {
                     .requires(source -> source.hasPermissionLevel(2))
                     .suggests(new ScriptPathSuggestions(this))
                     .executes(context -> {
-                        try {
-                            return runScript(context.getSource(), StringArgumentType.getString(context, "name"));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
+                        return runScript(context.getSource(), StringArgumentType.getString(context, "name"));
                     })
             )));
         });
     }
 
-    private int runScript(ServerCommandSource source, String scriptName) throws IOException {
+    private int runScript(ServerCommandSource source, String scriptName) {
         Path scriptPath = scriptDirectory.resolve(scriptName);
         var run = new ScriptRun(interpreter, scriptPath, source);
         interpreter.getCurrentRuns().add(run);

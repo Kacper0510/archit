@@ -2,8 +2,6 @@ package archit.common;
 
 import java.util.ArrayList;
 import java.util.List;
-import archit.common.ScriptRun;
-import archit.common.Logging;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;

@@ -2,7 +2,6 @@ package archit.common;
 
 import archit.parser.ArchitLexer;
 import archit.parser.ArchitParser;
-import net.minecraft.server.command.ServerCommandSource;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -55,7 +54,7 @@ public class ScriptRun {
     /**
      * @return true if run was successful, false if there were any errors
      */
-    public boolean run() throws IOException {
+    public boolean run() {
         if (!Files.exists(scriptLocation)) {
             interpreter.getLogger().scriptError(this, "Script file does not exist!");
             return false;
@@ -66,16 +65,14 @@ public class ScriptRun {
             interpreter.getLogger().scriptError(this, "Script file is not readable!");
             return false;
         }
-        String content;
+        CharStream charStream;
         try {
-            content = Files.readString(scriptLocation);
+            charStream = CharStreams.fromPath(scriptLocation);
         } catch (IOException e) {
             interpreter.getLogger().systemError(e, "Failed to read the script even though it's readable?!");
             return false;
         }
 
-        // TODO emil
-        CharStream charStream = CharStreams.fromPath(scriptLocation);
         ArchitLexer lexer = new ArchitLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         ArchitParser parser = new ArchitParser(tokens);
@@ -84,18 +81,6 @@ public class ScriptRun {
         // stworzenie visitora i uruchomienie
         ArchitVisitor visitor = new ArchitVisitor(interpreter, this);
         visitor.visit(tree);
-
-//        // przykładowe wywołania loggera - do usunięcia lub zakomentowania
-//        interpreter.getLogger().systemInfo(
-//            "Plik {} został uruchomiony!", scriptLocation
-//        );  // trafi do konsoli MC lub do log.txt
-//        interpreter.getLogger().scriptPrint(
-//            this, "Tak będzie działać funkcja print!"
-//        );  // trafi na chat MC lub do terminala
-//        var firstLine = content.split("\n")[0];
-//        interpreter.getLogger().scriptError(
-//            this, "Pierwsza linijka to {} o długości {}", firstLine, firstLine.length()
-//        );  // tak przekazujemy graczowi błędy
 
         return true;
     }
