@@ -35,7 +35,7 @@ public class Interpreter {
         // ustawiamy stan kursora w run
         run.setCursor(x, y, z);
 
-        logger.systemInfo("Kursor przesunięty na: {},{},{}", x, y, z);
+        logger.systemInfo("cursor moved on: {},{},{}", x, y, z);
     }
 
     //logika dla place
@@ -48,7 +48,7 @@ public class Interpreter {
             if (block != null) {
                 world.setBlockState(new BlockPos(run.getCursorX(), run.getCursorY(), run.getCursorZ()), block.getDefaultState());
             } else {
-                logger.scriptError(run, "Nieznany blok: {}", material);
+                logger.scriptError(run, "Unknown block: {}", material);
             }
         } else {
             logger.systemInfo("PLACE {} at {},{},{}", material, run.getCursorX(), run.getCursorY(), run.getCursorZ());

@@ -34,7 +34,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             String material = ctx.expr(0).getText();
             interpreter.builtinPlace(run, material);
             }
-            default -> interpreter.getLogger().scriptError(run, "Nieznana funkcja: {}", funcName);
+            default -> interpreter.getLogger().scriptError(run, "Unknown function: {}", funcName);
         }
 
         return super.visitChildren(ctx);
@@ -53,13 +53,55 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
                 }
             }
             case "move" -> {
-                if (ctx.expr().size() >= 3) {
+                if (ctx.expr().size() == 3) {
                     int x = Integer.parseInt(ctx.expr(0).getText());
                     int y = Integer.parseInt(ctx.expr(1).getText());
                     int z = Integer.parseInt(ctx.expr(2).getText());
                     interpreter.builtinMove(run, x, y, z);
+                } else if (ctx.expr().size() == 1) {
+                    String direction = ctx.expr(0).enumExpr().ID().getText();
+                    switch(direction) {
+                        case "posx" -> {
+                            int x = run.getCursorX() + 1;
+                            int y = run.getCursorY();
+                            int z = run.getCursorZ();
+                            interpreter.builtinMove(run, x, y, z);
+                        }
+                        case "posy" -> {
+                            int x = run.getCursorX();
+                            int y = run.getCursorY() + 1;
+                            int z = run.getCursorZ();
+                            interpreter.builtinMove(run, x, y, z);
+                        }
+                        case "posz" -> {
+                            int x = run.getCursorX();
+                            int y = run.getCursorY();
+                            int z = run.getCursorZ() + 1;
+                            interpreter.builtinMove(run, x, y, z);
+                        }
+                        case "negx" -> {
+                            int x = run.getCursorX() - 1;
+                            int y = run.getCursorY();
+                            int z = run.getCursorZ();
+                            interpreter.builtinMove(run, x, y, z);
+                        }
+                        case "negy" -> {
+                            int x = run.getCursorX();
+                            int y = run.getCursorY() - 1;
+                            int z = run.getCursorZ();
+                            interpreter.builtinMove(run, x, y, z);
+                        }
+                        case "negz" -> {
+                            int x = run.getCursorX();
+                            int y = run.getCursorY();
+                            int z = run.getCursorZ() - 1;
+                            interpreter.builtinMove(run, x, y, z);
+                        }
+                        default -> interpreter.getLogger().scriptError(run, "Unknown direction: {}", direction);
+                    }
+
                 } else {
-                    interpreter.getLogger().scriptError(run, "move wymaga 3 argumentów");
+                    interpreter.getLogger().scriptError(run, "move requires one or three arguments");
                 }
             }
             case "place" -> {
@@ -68,7 +110,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
                     interpreter.builtinPlace(run, material);
                 }
             }
-            default -> interpreter.getLogger().scriptError(run, "Nieznana funkcja: {}", funcName);
+            default -> interpreter.getLogger().scriptError(run, "Unknown function: {}", funcName);
         }
 
         return super.visitChildren(ctx);
