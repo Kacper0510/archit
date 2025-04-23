@@ -24,7 +24,7 @@ public class ArchitMod implements ModInitializer {
 
         scriptDirectory = FabricLoader.getInstance().getGameDir().resolve("archit-scripts");
         try {
-            Files.createDirectory(scriptDirectory);
+            Files.createDirectories(scriptDirectory);
         } catch (IOException e) {
             interpreter.getLogger().systemError(e, "Failed to create archit-scripts directory!");
         }
