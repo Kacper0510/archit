@@ -30,14 +30,17 @@ public class ArchitMod implements ModInitializer {
         }
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(CommandManager.literal("archit").then(CommandManager.literal("run").then(
-                CommandManager.argument("name", StringArgumentType.string())
+            dispatcher.register(
+                CommandManager.literal("archit")
                     .requires(source -> source.hasPermissionLevel(2))
-                    .suggests(new ScriptPathSuggestions(this))
-                    .executes(context -> {
-                        return runScript(context.getSource(), StringArgumentType.getString(context, "name"));
-                    })
-            )));
+                    .then(CommandManager.literal("run").then(
+                        CommandManager.argument("name", StringArgumentType.string())
+                            .suggests(new ScriptPathSuggestions(this))
+                            .executes(
+                                context -> runScript(context.getSource(), StringArgumentType.getString(context, "name"))
+                            )
+                    ))
+            );
         });
     }
 

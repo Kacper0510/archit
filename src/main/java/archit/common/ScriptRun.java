@@ -30,13 +30,16 @@ public class ScriptRun {
             var pos = source.getPosition();  // pozycja gracza bo to on wpisuje komende
             this.cursorX = (int) pos.x;
             this.cursorY = (int) pos.y;
-            this.cursorZ = (int) pos.z;
+            this.cursorZ = (int) pos.z - 1;
         }
     }
 
     // getter i setter dla wirtualnego kursora
     public void setCursor(int x, int y, int z) {
         this.cursorX = x; this.cursorY = y; this.cursorZ = z;
+    }
+    public void moveCursor(int x, int y, int z) {
+        this.cursorX += x; this.cursorY += y; this.cursorZ += z;
     }
     public int getCursorX() { return cursorX; }
     public int getCursorY() { return cursorY; }
@@ -96,9 +99,10 @@ public class ScriptRun {
             // stworzenie visitora i uruchomienie
             ArchitVisitor visitor = new ArchitVisitor(interpreter, this);
             visitor.visit(tree);
-
+        } catch (ScriptErrorListener.SyntaxException e) {
+            return false;
         } catch (RuntimeException e) {
-            // zakonczenie metody run()
+            interpreter.getLogger().systemError(e, "Unknown visitor exception caught!");
             return false;
         }
 
