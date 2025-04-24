@@ -57,6 +57,7 @@ expr
     | enumExpr
     | ID
     | '(' expr ')'
+    | '-' expr
     | expr BINARY_OP expr
     | 'not' expr
     | expr '[' expr ']'
@@ -92,8 +93,8 @@ LINE_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
 
 // Tokens
 STRING: ['"] (~['\\] | '\\' .)* ['"];
-NUMBER: '-'? [0-9]([0-9_]* [0-9])?;
-REAL: '-'? [0-9]([0-9_]* [0-9])? '.' [0-9]([0-9_]* [0-9])? ( [eE] [-+]? [0-9]+)?;
+NUMBER: [0-9]([0-9_]* [0-9])?;
+REAL: [0-9]([0-9_]* [0-9])? '.' [0-9]([0-9_]* [0-9])? ( [eE] [-+]? [0-9]+)?;
 LOGIC: 'true' | 'false';
 BINARY_OP
     : '+'
