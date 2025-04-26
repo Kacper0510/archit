@@ -5,6 +5,8 @@ import archit.parser.ArchitParser;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -95,6 +97,12 @@ public class ScriptRun {
 
         try {
             ArchitParser.ProgramContext tree = parser.program();
+
+            // przejście listenera po drzewie
+            VariableTable variableTable = new VariableTable();
+            VariableListener variableListener = new VariableListener(variableTable);
+            ParseTreeWalker walker = new ParseTreeWalker();
+            walker.walk(variableListener, tree);
 
             // stworzenie visitora i uruchomienie
             ArchitVisitor visitor = new ArchitVisitor(interpreter, this);
