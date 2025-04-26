@@ -3,21 +3,21 @@ package archit.common;
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 public class ArchitVisitor extends ArchitBaseVisitor<Void> {
 
     private final Interpreter interpreter;
     private final ScriptRun run;
 
-    private final Map<String, Value> variables = new HashMap<>();
+    VariableTable variableTable;
 
 
-    ArchitVisitor(Interpreter interpreter, ScriptRun run) {
+    ArchitVisitor(Interpreter interpreter, ScriptRun run, VariableTable variableTable) {
         this.interpreter = interpreter;
         this.run = run;
+        this.variableTable = variableTable;
     }
 
     @Override
@@ -93,21 +93,6 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         }
     }
 
-    // class for value and type
-    private static class Value {
-        final Object value;
-        final String type;
-
-        Value(Object value, String type) {
-            this.value = value;
-            this.type = type;
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(value);
-        }
-    }
 
     // evaluating
     private Value evaluate(ArchitParser.ExprContext ctx) {
@@ -129,10 +114,10 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         }
         if (ctx.ID() != null) {
             String name = ctx.ID().getText();
-            if (!variables.containsKey(name)) {
-                throw new RuntimeException("Unknown variable: " + name);
+            if (!variableTable.isDeclared(name)) {
+                throw new VariableTable.VariableException("Unknown variable: " + name);
             }
-            return variables.get(name);
+            return variableTable.getValue(name);
         }
         if (ctx.BINARY_OP() != null) {
             Value left = evaluate(ctx.expr(0));
