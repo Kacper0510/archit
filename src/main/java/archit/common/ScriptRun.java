@@ -105,7 +105,7 @@ public class ScriptRun {
             walker.walk(variableListener, tree);
 
             // stworzenie visitora i uruchomienie
-            ArchitVisitor visitor = new ArchitVisitor(interpreter, this);
+            ArchitVisitor visitor = new ArchitVisitor(interpreter, this, variableTable);
             visitor.visit(tree);
         } catch (ScriptErrorListener.SyntaxException e) {
             return false;
