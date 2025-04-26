@@ -1,0 +1,235 @@
+repeat 3 {
+    move $posz;
+    place :brown_terracotta;
+}
+move 0, 0, 3;
+repeat 3 {
+    move $posz;
+    place :brown_terracotta;
+}
+move 0, 1, -8;
+
+// --------------------
+
+repeat 2 {
+    move $posz;
+    place :brown_terracotta;
+}
+move 0, 0, 3;
+repeat 2 {
+    move $posz;
+    place :brown_terracotta;
+}
+move 0, 1, -7;
+
+// --------------------
+
+repeat 3 {
+    move $posz;
+    place :blue_wool;
+}
+move 0, 0, 1;
+repeat 3 {
+    move $posz;
+    place :blue_wool;
+}
+move 0, 1, -9;
+
+// --------------------
+
+repeat 2 {
+    move $posz;
+    place :white_terracotta;
+}
+repeat 7 {
+    move $posz;
+    place :blue_wool;
+}
+repeat 2 {
+    move $posz;
+    place :white_terracotta;
+}
+move 0, 1, -11;
+
+// --------------------
+
+repeat 3 {
+    move $posz;
+    place :white_terracotta;
+}
+repeat 5 {
+    move $posz;
+    place :blue_wool;
+}
+repeat 3 {
+    move $posz;
+    place :white_terracotta;
+}
+move 0, 1, -11;
+
+// --------------------
+
+repeat 2 {
+    move $posz;
+    place :white_terracotta;
+}
+move $posz;
+place :red_wool;
+repeat 5 {
+    move $posz;
+    place :blue_wool;
+}
+move $posz;
+place :red_wool;
+repeat 2 {
+    move $posz;
+    place :white_terracotta;
+}
+move 0, 1, -11;
+
+// --------------------
+
+repeat 4 {
+    move $posz;
+    place :red_wool;
+}
+move $posz;
+place :gold_block;
+move $posz;
+place :blue_wool;
+move $posz;
+place :gold_block;
+repeat 4 {
+    move $posz;
+    place :red_wool;
+}
+move 0, 1, -10;
+
+// --------------------
+
+repeat 3 {
+    move $posz;
+    place :red_wool;
+}
+move $posz;
+place :blue_wool;
+move $posz;
+place :red_wool;
+move $posz;
+place :blue_wool;
+repeat 3 {
+    move $posz;
+    place :red_wool;
+}
+move 0, 1, -8;
+
+// --------------------
+
+repeat 2 {
+    move $posz;
+    place :red_wool;
+}
+move $posz;
+place :blue_wool;
+move $posz;
+place :red_wool;
+move $posz;
+place :blue_wool;
+repeat 2 {
+    move $posz;
+    place :red_wool;
+}
+move 0, 1, -6;
+
+// --------------------
+
+repeat 5 {
+    move $posz;
+    place :white_terracotta;
+}
+move 0, 1, -7;
+
+// --------------------
+
+repeat 2 {
+    move $posz;
+    place :brown_wool;
+}
+repeat 3 {
+    move $posz;
+    place :white_terracotta;
+}
+repeat 4 {
+    move $posz;
+    place :brown_wool;
+}
+move 0, 1, -8;
+
+// --------------------
+
+place :brown_wool;
+move $posz;
+place :white_terracotta;
+repeat 2 {
+    move $posz;
+    place :brown_wool;
+}
+repeat 2 {
+    move $posz;
+    place :white_terracotta;
+}
+move $posz;
+place :brown_wool;
+repeat 3 {
+    move $posz;
+    place :white_terracotta;
+}
+move 0, 1, -9;
+
+// --------------------
+
+place :brown_wool;
+move $posz;
+place :white_terracotta;
+move $posz;
+place :brown_wool;
+repeat 2 {
+    move $posz;
+    place :white_terracotta;
+}
+move $posz;
+place :obsidian;
+repeat 3 {
+    move $posz;
+    place :white_terracotta;
+}
+move 0, 1, -8;
+
+// --------------------
+
+repeat 3 {
+    move $posz;
+    place :brown_wool;
+}
+move $posz;
+place :white_terracotta;
+move $posz;
+place :obsidian;
+move $posz;
+place :white_terracotta;
+move 0, 1, -6;
+
+// --------------------
+
+repeat 8 {
+    move $posz;
+    place :red_wool;
+}
+move 0, 1, -7;
+
+// --------------------
+
+repeat 5 {
+    move $posz;
+    place :red_wool;
+}

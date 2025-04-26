@@ -2,7 +2,6 @@ package archit.common;
 
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
-
 import java.util.List;
 
 public class ArchitVisitor extends ArchitBaseVisitor<Void> {
@@ -13,6 +12,15 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
     ArchitVisitor(Interpreter interpreter, ScriptRun run) {
         this.interpreter = interpreter;
         this.run = run;
+    }
+
+    @Override
+    public Void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
+        int iterations = Integer.parseInt(ctx.expr().NUMBER().getText());
+        for (int i = 0; i < iterations; i++) {
+            super.visitChildren(ctx);
+        }
+        return null;
     }
 
     @Override
@@ -53,42 +61,12 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
                 } else if (params.size() == 1) {
                     String direction = params.get(0).enumExpr().ID().getText();
                     switch(direction) {
-                        case "posx" -> {
-                            int x = run.getCursorX() + 1;
-                            int y = run.getCursorY();
-                            int z = run.getCursorZ();
-                            interpreter.builtinMove(run, x, y, z);
-                        }
-                        case "posy" -> {
-                            int x = run.getCursorX();
-                            int y = run.getCursorY() + 1;
-                            int z = run.getCursorZ();
-                            interpreter.builtinMove(run, x, y, z);
-                        }
-                        case "posz" -> {
-                            int x = run.getCursorX();
-                            int y = run.getCursorY();
-                            int z = run.getCursorZ() + 1;
-                            interpreter.builtinMove(run, x, y, z);
-                        }
-                        case "negx" -> {
-                            int x = run.getCursorX() - 1;
-                            int y = run.getCursorY();
-                            int z = run.getCursorZ();
-                            interpreter.builtinMove(run, x, y, z);
-                        }
-                        case "negy" -> {
-                            int x = run.getCursorX();
-                            int y = run.getCursorY() - 1;
-                            int z = run.getCursorZ();
-                            interpreter.builtinMove(run, x, y, z);
-                        }
-                        case "negz" -> {
-                            int x = run.getCursorX();
-                            int y = run.getCursorY();
-                            int z = run.getCursorZ() - 1;
-                            interpreter.builtinMove(run, x, y, z);
-                        }
+                        case "posx" -> interpreter.builtinMove(run, 1, 0, 0);
+                        case "posy" -> interpreter.builtinMove(run, 0, 1, 0);
+                        case "posz" -> interpreter.builtinMove(run, 0, 0, 1);
+                        case "negx" -> interpreter.builtinMove(run, -1, 0, 0);
+                        case "negy" -> interpreter.builtinMove(run, 0, -1, 0);
+                        case "negz" -> interpreter.builtinMove(run, 0, 0, -1);
                         default -> interpreter.getLogger().scriptError(run, "Unknown direction: {}", direction);
                     }
 

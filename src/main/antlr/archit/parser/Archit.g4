@@ -57,6 +57,7 @@ expr
     | enumExpr
     | ID
     | '(' expr ')'
+    | '-' expr
     | expr BINARY_OP expr
     | 'not' expr
     | expr '[' expr ']'

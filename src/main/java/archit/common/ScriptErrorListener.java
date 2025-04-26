@@ -21,6 +21,12 @@ public class ScriptErrorListener extends BaseErrorListener {
             RecognitionException e
     ) {
         logger.scriptError(run, "Syntax error at line {}, char {}: {}", line, charPositionInLine, msg);
-        throw new RuntimeException("Script aborted due to syntax error.");
+        throw new SyntaxException("Script aborted due to syntax error.");
+    }
+
+    public static class SyntaxException extends RuntimeException {
+        public SyntaxException(String message) {
+            super(message);
+        }
     }
 }

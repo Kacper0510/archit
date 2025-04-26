@@ -33,9 +33,8 @@ public class Interpreter {
     // logika dla move
     public void builtinMove(ScriptRun run, int x, int y, int z) {
         // ustawiamy stan kursora w run
-        run.setCursor(x, y, z);
-
-        logger.systemInfo("cursor moved on: {},{},{}", x, y, z);
+        run.moveCursor(x, y, z);
+        // logger.systemInfo("cursor moved on: {},{},{}", x, y, z);
     }
 
     //logika dla place

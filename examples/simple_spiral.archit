@@ -1,21 +1,8 @@
 place(:quartz_block);
 
-move($posx); move($posy); move($posz); place(:quartz_block);
-move($posz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($posx); move($posy); place(:quartz_block);
-
-move($posx); move($posy); move($posz); place(:quartz_block);
-move($posz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($posx); move($posy); place(:quartz_block);
-
-move($posx); move($posy); move($posz); place(:quartz_block);
-move($posz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($posx); move($posy); place(:quartz_block);
-
-move($posx); move($posy); move($posz); place(:quartz_block);
-move($posz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($negx); move($posy); place(:quartz_block);
-move($negz); move($posx); move($posy); place(:quartz_block);
+repeat 5 {  // pętle for działają, komentarze też
+    move($posx); move($posy); move($posz); place(:quartz_block);
+    move($posz); move($negx); move($posy); place(:quartz_block);
+    move($negz); move($negx); move($posy); place(:quartz_block);
+    move($negz); move($posx); move($posy); place(:quartz_block);
+}
