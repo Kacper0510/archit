@@ -2,12 +2,18 @@ package archit.common;
 
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ArchitVisitor extends ArchitBaseVisitor<Void> {
 
     private final Interpreter interpreter;
     private final ScriptRun run;
+
+    private final Map<String, Value> variables = new HashMap<>();
+
 
     ArchitVisitor(Interpreter interpreter, ScriptRun run) {
         this.interpreter = interpreter;
@@ -86,4 +92,95 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             default -> interpreter.getLogger().scriptError(run, "Unknown function: {}", functionName);
         }
     }
+
+    // class for value and type
+    private static class Value {
+        final Object value;
+        final String type;
+
+        Value(Object value, String type) {
+            this.value = value;
+            this.type = type;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(value);
+        }
+    }
+
+    // evaluating
+    private Value evaluate(ArchitParser.ExprContext ctx) {
+        if (ctx.NUMBER() != null) {
+            return new Value(Integer.parseInt(ctx.NUMBER().getText()), "number");
+        }
+        if (ctx.REAL() != null) {
+            return new Value(Double.parseDouble(ctx.REAL().getText()), "real");
+        }
+        if (ctx.LOGIC() != null) {
+            return new Value(Boolean.parseBoolean(ctx.LOGIC().getText()), "logic");
+        }
+        if (ctx.STRING() != null) {
+            String text = ctx.STRING().getText();
+            text = text.substring(1, text.length() - 1); // deleting cudzuslowy xd no quotation marks
+            // interpolation
+            text = interpolateString(text);
+            return new Value(text, "string");
+        }
+        if (ctx.ID() != null) {
+            String name = ctx.ID().getText();
+            if (!variables.containsKey(name)) {
+                throw new RuntimeException("Unknown variable: " + name);
+            }
+            return variables.get(name);
+        }
+        if (ctx.BINARY_OP() != null) {
+            Value left = evaluate(ctx.expr(0));
+            Value right = evaluate(ctx.expr(1));
+            return evalBinaryOp(left, ctx.BINARY_OP().getText(), right);
+        }
+
+        // TODO: function for expressions
+        throw new RuntimeException("Unsupported expression: " + ctx.getText());
+    }
+
+    // The real func for string interpolation
+    private String interpolateString(String text) {
+        // TODO
+        return text;
+    }
+
+    // binary .//'
+    private Value evalBinaryOp(Value left, String op, Value right) {
+        if (left.type.equals("number") && right.type.equals("number")) {
+            int l = (Integer) left.value;
+            int r = (Integer) right.value;
+            return switch (op) {
+                case "+" -> new Value(l + r, "number");
+                case "-" -> new Value(l - r, "number");
+                case "*" -> new Value(l * r, "number");
+                case "/" -> new Value(l / r, "number");
+                case "%" -> new Value(l % r, "number");
+                case "==" -> new Value(l == r, "logic");
+                case "!=" -> new Value(l != r, "logic");
+                case ">" -> new Value(l > r, "logic");
+                case "<" -> new Value(l < r, "logic");
+                case ">=" -> new Value(l >= r, "logic");
+                case "<=" -> new Value(l <= r, "logic");
+                case "^" -> new Value((int) Math.pow(l, r), "number");
+                default -> throw new RuntimeException("Unknown operator: " + op);
+            };
+        }
+        if (left.type.equals("logic") && right.type.equals("logic")) {
+            boolean l = (Boolean) left.value;
+            boolean r = (Boolean) right.value;
+            return switch (op) {
+                case "and" -> new Value(l && r, "logic");
+                case "or" -> new Value(l || r, "logic");
+                default -> throw new RuntimeException("Unknown logic operator: " + op);
+            };
+        }
+        throw new RuntimeException("Unsupported operand types for '" + op + "': " + left.type + " and " + right.type);
+    }
+
 }
