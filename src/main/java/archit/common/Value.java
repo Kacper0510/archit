@@ -8,7 +8,7 @@ public class Value {
         this.value = value;
         this.type = type;
     }
-
+//
     public int asNumber() {
         if (value instanceof Integer) {
             return (Integer) value;
