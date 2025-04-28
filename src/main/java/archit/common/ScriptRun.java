@@ -109,6 +109,9 @@ public class ScriptRun {
             visitor.visit(tree);
         } catch (ScriptErrorListener.SyntaxException e) {
             return false;
+        } catch (ScriptExceptions e) {
+            interpreter.getLogger().scriptError(this, e.getMessage());
+            return false;
         } catch (RuntimeException e) {
             interpreter.getLogger().systemError(e, "Unknown visitor exception caught!");
             return false;

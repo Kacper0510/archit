@@ -6,7 +6,7 @@ import archit.parser.ArchitParser;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-//xd
+
 public class ArchitVisitor extends ArchitBaseVisitor<Void> {
 
     private final Interpreter interpreter;
@@ -25,6 +25,44 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         for (int i = 0; i < iterations; i++) {
             super.visitChildren(ctx);
         }
+        return null;
+    }
+
+    @Override
+    public Void visitIfStat(ArchitParser.IfStatContext ctx) {
+        for (int i = 0; i < ctx.expr().size(); i++) {
+            Value condition = evaluate(ctx.expr(i));
+            if (!condition.type.equals("logic")) {
+                throw new ScriptExceptions.UnexpectedException("Condition must be a boolean expression");
+            }
+            if (condition.asBoolean()) {
+                super.visitChildren(ctx.scopeStat(i));
+                return null;
+            }
+        }
+        super.visitChildren(ctx.scopeStat(ctx.expr().size()));
+        return null;
+    }
+
+    @Override
+    public Void visitVarDecl(ArchitParser.VarDeclContext ctx) {
+        String varName = ctx.ID().getText();
+        Value value = evaluate(ctx.expr());
+        if (variableTable.getType(varName) != value.type) {
+            throw new ScriptExceptions.VariableException("Type mismatch for variable: " + varName);
+        }
+        variableTable.setValue(varName, value);
+        return null;
+    }
+
+    @Override
+    public Void visitAssignStat(ArchitParser.AssignStatContext ctx) {
+        String varName = ctx.ID().getText();
+        Value value = evaluate(ctx.expr());
+        if (variableTable.getType(varName) != value.type) {
+            throw new ScriptExceptions.VariableException("Type mismatch for variable: " + varName);
+        }
+        variableTable.setValue(varName, value);
         return null;
     }
 
@@ -103,7 +141,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         if (ctx.ID() != null) {
             String name = ctx.ID().getText();
             if (!variableTable.isDeclared(name)) {
-                throw new VariableTable.VariableException("Unknown variable: " + name);
+                throw new ScriptExceptions.VariableException("Unknown variable: " + name);
             }
             return variableTable.getValue(name);
         }
@@ -118,7 +156,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             Value inner = evaluate(ctx.expr(0));
             return evalUnaryOp(op, inner);
         }
-        throw new RuntimeException("Unsupported expression: " + ctx.getText());
+        throw new ScriptExceptions.UnexpectedException("Unsupported expression: " + ctx.getText());
     }
 
     private String interpolateString(String text) {
