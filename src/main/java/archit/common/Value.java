@@ -1,17 +1,32 @@
 package archit.common;
 
-// class for value and type
 public class Value {
-    final Object value;
-    final String type;
+    public Object value;
+    public String type;
 
-    Value(Object value, String type) {
+    public Value(Object value, String type) {
         this.value = value;
         this.type = type;
     }
 
+    public int asNumber() {
+        if (value instanceof Integer) {
+            return (Integer) value;
+        } else if (value instanceof Double) {
+            return ((Double) value).intValue();
+        }
+        throw new RuntimeException("Value is not a number: " + value);
+    }
+
+    public boolean asBoolean() {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        throw new RuntimeException("Value is not a boolean: " + value);
+    }
+
     @Override
     public String toString() {
-        return String.valueOf(value);
+        return value.toString();
     }
 }
