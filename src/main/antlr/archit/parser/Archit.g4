@@ -23,7 +23,8 @@ scopeStat: '{' statement* '}';
 
 // Variables
 varDecl: 'var' ID ':' type '=' (expr | functionCallNoBrackets) ';';
-assignStat: ID ASSIGNMENT (expr | functionCallNoBrackets) ';';
+assignStat: ID assignment (expr | functionCallNoBrackets) ';';
+assignment: '=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=';
 
 type
     : 'number'
@@ -37,7 +38,7 @@ type
 
 listType: '[' type ']';
 mapType: '|' type '->' type '|';
-enumType: LT ID (',' ID)* GT;
+enumType: '<' ID (',' ID)* '>';
 
 // If
 ifStat
@@ -58,7 +59,7 @@ expr
     | ID
     | '(' expr ')'
     | '-' expr
-    | expr BINARY_OP expr
+    | expr binary_op expr
     | 'not' expr
     | expr '[' expr ']'
     | functionCall;
@@ -67,6 +68,21 @@ listExpr: '[' (expr (',' expr)*)? ']' | '#' materialExpr;
 mapExpr: '|' (expr '->' expr (',' expr '->' expr)*)? '|';
 enumExpr: '$' ID;
 materialExpr: ID ':' ID | ':' ID;
+binary_op
+    : '+'
+    | '-'
+    | '*'
+    | '/'
+    | '^'
+    | '%'
+    | '=='
+    | '!='
+    | '>'
+    | '>='
+    | '<'
+    | '<='
+    | 'and'
+    | 'or';
 
 // Loops
 whileStat: 'while' (expr | functionCallNoBrackets) scopeStat;
@@ -96,23 +112,5 @@ STRING: ['"] (~['\\] | '\\' .)* ['"];
 NUMBER: [0-9]([0-9_]* [0-9])?;
 REAL: [0-9]([0-9_]* [0-9])? '.' [0-9]([0-9_]* [0-9])? ( [eE] [-+]? [0-9]+)?;
 LOGIC: 'true' | 'false';
-BINARY_OP
-    : '+'
-    | '-'
-    | '*'
-    | '/'
-    | '^'
-    | '%'
-    | '=='
-    | '!='
-    | GT
-    | '>='
-    | LT
-    | '<='
-    | 'and'
-    | 'or';
-LT: '<';
-GT: '>';
-ASSIGNMENT: '=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=';
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 WS: [ \t\r\n]+ -> skip;
