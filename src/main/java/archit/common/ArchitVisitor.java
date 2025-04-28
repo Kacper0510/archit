@@ -48,7 +48,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
     public Void visitVarDecl(ArchitParser.VarDeclContext ctx) {
         String varName = ctx.ID().getText();
         Value value = evaluate(ctx.expr());
-        if (variableTable.getType(varName) != value.type) {
+        if (!variableTable.getType(varName).equals(value.type)) {
             throw new ScriptExceptions.VariableException("Type mismatch for variable: " + varName);
         }
         variableTable.setValue(varName, value);
@@ -59,7 +59,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
     public Void visitAssignStat(ArchitParser.AssignStatContext ctx) {
         String varName = ctx.ID().getText();
         Value value = evaluate(ctx.expr());
-        if (variableTable.getType(varName) != value.type) {
+        if (!variableTable.getType(varName).equals(value.type)) {
             throw new ScriptExceptions.VariableException("Type mismatch for variable: " + varName);
         }
         variableTable.setValue(varName, value);
@@ -111,7 +111,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             }
             case "place" -> {
                 if (!params.isEmpty()) {
-                    String material = evaluate(params.get(0)).value.toString();
+                    String material = params.get(0).getText();
                     if (material.startsWith(":")) {
                         material = "minecraft" + material;
                     }
@@ -134,7 +134,6 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         }
         if (ctx.STRING() != null) {
             String text = ctx.STRING().getText();
-            text = text.substring(1, text.length() - 1);
             text = interpolateString(text);
             return new Value(text, "string");
         }

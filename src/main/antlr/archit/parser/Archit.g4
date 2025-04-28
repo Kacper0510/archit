@@ -37,7 +37,7 @@ type
 
 listType: '[' type ']';
 mapType: '|' type '->' type '|';
-enumType: '<' ID (',' ID)* '>';
+enumType: LT ID (',' ID)* GT;
 
 // If
 ifStat
@@ -105,12 +105,14 @@ BINARY_OP
     | '%'
     | '=='
     | '!='
-    | '>'
+    | GT
     | '>='
-    | '<'
+    | LT
     | '<='
     | 'and'
     | 'or';
+LT: '<';
+GT: '>';
 ASSIGNMENT: '=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=';
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 WS: [ \t\r\n]+ -> skip;
