@@ -122,19 +122,32 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
     }
 
     private String interpolateString(String text) {
-        Pattern pattern = Pattern.compile("\\{([a-zA-Z_][a-zA-Z0-9_]*)}");
-        Matcher matcher = pattern.matcher(text);
-        StringBuffer sb = new StringBuffer();
-        while (matcher.find()) {
-            String varName = matcher.group(1);
-            Value value = variableTable.getValue(varName);
-            if (value == null) {
-                throw new RuntimeException("Unknown variable in interpolation: " + varName);
+        if (text.charAt(0) == '"' && text.charAt(text.length() - 1) == '"') {
+            text = text.substring(1, text.length() - 1);
+
+            Pattern pattern = Pattern.compile("\\{([a-zA-Z_][a-zA-Z0-9_]*)}");
+            Matcher matcher = pattern.matcher(text);
+            StringBuffer sb = new StringBuffer();
+
+            while (matcher.find()) {
+                String varName = matcher.group(1);
+                if (!variableTable.isDeclared(varName)) {
+                    throw new RuntimeException("Unknown variable in interpolation: " + varName);
+                }
+                Value value = variableTable.getValue(varName);
+                if (value == null) {
+                    throw new RuntimeException("Null value for variable in interpolation: " + varName);
+                }
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(String.valueOf(value.value)));
             }
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(String.valueOf(value.value)));
+
+            matcher.appendTail(sb);
+            return sb.toString();
+        } else if (text.charAt(0) == '\'' && text.charAt(text.length() - 1) == '\'') {
+            return text.substring(1, text.length() - 1);
+        } else {
+            throw new RuntimeException("Invalid string format. Use either '...' or \"...\"");
         }
-        matcher.appendTail(sb);
-        return sb.toString();
     }
 
     private Value evalBinaryOp(Value left, String op, Value right) {
