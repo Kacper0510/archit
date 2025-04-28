@@ -132,11 +132,11 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             while (matcher.find()) {
                 String varName = matcher.group(1);
                 if (!variableTable.isDeclared(varName)) {
-                    throw new RuntimeException("Unknown variable in interpolation: " + varName);
+                    throw new ScriptExceptions.VariableException("Unknown variable in interpolation: " + varName);
                 }
                 Value value = variableTable.getValue(varName);
                 if (value == null) {
-                    throw new RuntimeException("Null value for variable in interpolation: " + varName);
+                    throw new ScriptExceptions.InterpolationException("Null value for variable in interpolation: " + varName);
                 }
                 matcher.appendReplacement(sb, Matcher.quoteReplacement(String.valueOf(value.value)));
             }
@@ -146,7 +146,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         } else if (text.charAt(0) == '\'' && text.charAt(text.length() - 1) == '\'') {
             return text.substring(1, text.length() - 1);
         } else {
-            throw new RuntimeException("Invalid string format. Use either '...' or \"...\"");
+            throw new ScriptExceptions.SyntaxException("Invalid string format. Use either '...' or \"...\"");
         }
     }
 
@@ -167,7 +167,7 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
                 case ">=" -> new Value(l >= r, "logic");
                 case "<=" -> new Value(l <= r, "logic");
                 case "^" -> new Value((int) Math.pow(l, r), "number");
-                default -> throw new RuntimeException("Unknown operator: " + op);
+                default -> throw new ScriptExceptions.UnexpectedException("Unknown operator: " + op);
             };
         }
         if (left.type.equals("logic") && right.type.equals("logic")) {
@@ -176,10 +176,10 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             return switch (op) {
                 case "and" -> new Value(l && r, "logic");
                 case "or" -> new Value(l || r, "logic");
-                default -> throw new RuntimeException("Unknown logic operator: " + op);
+                default -> throw new ScriptExceptions.UnexpectedException("Unknown logic operator: " + op);
             };
         }
-        throw new RuntimeException("Unsupported operand types for '" + op + "': " + left.type + " and " + right.type);
+        throw new ScriptExceptions.UnexpectedException("Unsupported operand types for '" + op + "': " + left.type + " and " + right.type);
     }
 
     private Value evalUnaryOp(String op, Value inner) {
@@ -187,16 +187,16 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
             if (inner.type.equals("number")) {
                 return new Value(-inner.asNumber(), "number");
             } else {
-                throw new RuntimeException("Unary minus on non-number type: " + inner.type);
+                throw new ScriptExceptions.UnexpectedException("Unary minus on non-number type: " + inner.type);
             }
         }
         if (op.equals("not")) {
             if (inner.type.equals("logic")) {
                 return new Value(!inner.asBoolean(), "logic");
             } else {
-                throw new RuntimeException("Unary not on non-logic type: " + inner.type);
+                throw new ScriptExceptions.UnexpectedException("Unary not on non-logic type: " + inner.type);
             }
         }
-        throw new RuntimeException("Unknown unary operator: " + op);
+        throw new ScriptExceptions.UnexpectedException("Unknown unary operator: " + op);
     }
 }
