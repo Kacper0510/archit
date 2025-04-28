@@ -80,6 +80,7 @@ functionCallNoBrackets: ID (expr (',' expr)*)?;
 
 // Function declarations
 functionDecl: 'function' ID '(' functionParams? ')' (':' type)? scopeStat;
+nativeDecl: 'native' ID '(' functionParams? ')' (':' type)? ';';
 
 // Function parameter list
 functionParams: functionParam (',' functionParam)*;
