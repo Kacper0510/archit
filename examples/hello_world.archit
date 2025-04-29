@@ -1,3 +1,17 @@
 move $negy;
 place :diamond_block;
-print 'Hello world';
+var x:number = 5;
+move(0,x,0);
+place :diamond_block;
+if x>3 {
+    print 'Hello world';
+}
+
+var y:number = 0;
+y = 2+2*2;
+
+repeat y {
+    move $posx
+    place :dirt
+}
+

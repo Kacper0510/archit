@@ -1,0 +1,55 @@
+//wymiary
+var r:number        = 14;                   // promień kuli w blokach
+var diameter:number = r * 2 + 1;           // średnica kuli
+var center:number   = r;                   // środek względem 0…diameter−1
+var y:number        = 0;                   // licznik poziomów Y
+
+//budowanie warstw poziomo
+repeat(diameter) {
+    var z:number = 0;  // licznik wierszy Z
+
+    repeat(diameter) {
+        var x:number     = 0;
+        // kwadrat promienia i wnętrza
+        var rSq:number   = r^2;
+        var innerR:number= r - 1;             // wewnętrzna warstwa
+        var innerSq:number = innerR * innerR;
+
+        // budowanie linii X na poziomie (y,z)
+        repeat(diameter) {
+            // odległości od środka
+            var dx:number = x - center;
+            var dy:number = y - center;
+            var dz:number = z - center;
+            var distSq:number = dx*dx + dy*dy + dz*dz;
+
+            // powierzchnia kuli
+            if (distSq <= rSq and distSq > innerSq) {
+                place(:white_concrete);
+            }
+            // wnętrze kuli
+            else if (distSq <= innerSq) {
+                // checkerboard wewnątrz
+                if ((x + y + z) % 2 == 0) {
+                    place :green_concrete;
+                } else {
+                    place(:red_concrete);
+                }
+            }
+
+            // przesunięcie w prawo o 1
+            x = x + 1;
+            move(1, 0, 0);
+        }
+
+        // reset X i krok w głąb (osią Z)
+        move(-diameter, 0, 0);
+        z = z + 1;
+        move(0, 0, 1);
+    }
+
+    // reset Z i w górę (osią Y)
+    move(0, 0, -diameter);
+    y = y + 1;
+    move(0, 1, 0);
+}

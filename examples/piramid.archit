@@ -1,0 +1,33 @@
+//wymiary
+var layers:number    = 11;   // liczba poziomów
+var baseWidth:number = 21;   // szerokość podstawy
+var level:number     = 0;
+
+
+repeat(layers) {
+    var width:number = baseWidth - (level * 2);
+    //przechodzenie do centrum
+    if (level > 0) {
+        move(1, 0, 1);
+    }
+
+    var zCount:number = 0;
+
+    repeat(width) {
+        var xCount:number = 0;
+
+        repeat(width) {
+            place(:sandstone);
+            move(1, 0, 0);
+            xCount = xCount + 1;
+        }
+
+        move(-xCount, 0, 0);
+        move(0, 0, 1);
+        zCount = zCount + 1;
+    }
+
+    move(0, 0, -zCount); // reset Z
+    move(0, 1, 0);       // przechodzi wyżej
+    level = level + 1;
+}
