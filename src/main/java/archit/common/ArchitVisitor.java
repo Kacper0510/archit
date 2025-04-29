@@ -153,6 +153,9 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         if (ctx.expr().size() == 1) {
             String op = ctx.getChild(0).getText();
             Value inner = evaluate(ctx.expr(0));
+            if (op.equals("(")) {
+                return inner;
+            }
             return evalUnaryOp(op, inner);
         }
         throw new ScriptExceptions.UnexpectedException("Unsupported expression: " + ctx.getText());

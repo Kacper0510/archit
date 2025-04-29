@@ -58,31 +58,19 @@ expr
     | enumExpr
     | ID
     | '(' expr ')'
-    | '-' expr
-    | expr binary_op expr
-    | 'not' expr
     | expr '[' expr ']'
+    | ('-' | 'not') expr
+    | expr '^' expr
+    | expr ('*' | '/' | '%') expr
+    | expr ('+' | '-') expr
+    | expr ('==' | '!=' | '>' | '>=' | '<' | '<=') expr
+    | expr ('and' | 'or') expr
     | functionCall;
 
 listExpr: '[' (expr (',' expr)*)? ']' | '#' materialExpr;
 mapExpr: '|' (expr '->' expr (',' expr '->' expr)*)? '|';
 enumExpr: '$' ID;
 materialExpr: ID ':' ID | ':' ID;
-binary_op
-    : '+'
-    | '-'
-    | '*'
-    | '/'
-    | '^'
-    | '%'
-    | '=='
-    | '!='
-    | '>'
-    | '>='
-    | '<'
-    | '<='
-    | 'and'
-    | 'or';
 
 // Loops
 whileStat: 'while' (expr | functionCallNoBrackets) scopeStat;
