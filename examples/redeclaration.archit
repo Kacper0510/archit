@@ -1,0 +1,8 @@
+var x:number = 0;
+move($posz);
+var x:number = 3;    //redeklaracja
+
+repeat x{
+    place(:stone);
+    move($posy);
+}
