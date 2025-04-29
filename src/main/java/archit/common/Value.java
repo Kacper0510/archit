@@ -8,21 +8,21 @@ public class Value {
         this.value = value;
         this.type = type;
     }
-//
+
     public int asNumber() {
-        if (value instanceof Integer) {
-            return (Integer) value;
-        } else if (value instanceof Double) {
-            return ((Double) value).intValue();
+        if (value instanceof Integer i) {
+            return i;
+        } else if (value instanceof Double d) {
+            return d.intValue();
         }
-        throw new RuntimeException("Value is not a number: " + value);
+        throw new ScriptExceptions.UnexpectedException("Value is not a number: " + value);
     }
 
     public boolean asBoolean() {
-        if (value instanceof Boolean) {
-            return (Boolean) value;
+        if (value instanceof Boolean b) {
+            return b;
         }
-        throw new RuntimeException("Value is not a boolean: " + value);
+        throw new ScriptExceptions.UnexpectedException("Value is not a boolean: " + value);
     }
 
     @Override

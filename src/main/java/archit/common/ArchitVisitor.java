@@ -2,13 +2,11 @@ package archit.common;
 
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ArchitVisitor extends ArchitBaseVisitor<Void> {
-
     private final Interpreter interpreter;
     private final ScriptRun run;
     VariableTable variableTable;
@@ -40,7 +38,9 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
                 return null;
             }
         }
-        super.visitChildren(ctx.scopeStat(ctx.expr().size()));
+        if (ctx.scopeStat().size() > ctx.expr().size()) {
+            super.visitChildren(ctx.scopeStat(ctx.expr().size()));
+        }
         return null;
     }
 
@@ -176,7 +176,9 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
                 }
                 Value value = variableTable.getValue(varName);
                 if (value == null) {
-                    throw new ScriptExceptions.InterpolationException("Null value for variable in interpolation: " + varName);
+                    throw new ScriptExceptions.InterpolationException(
+                        "Null value for variable in interpolation: " + varName
+                    );
                 }
                 matcher.appendReplacement(sb, Matcher.quoteReplacement(String.valueOf(value.value)));
             }
@@ -219,7 +221,9 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
                 default -> throw new ScriptExceptions.UnexpectedException("Unknown logic operator: " + op);
             };
         }
-        throw new ScriptExceptions.UnexpectedException("Unsupported operand types for '" + op + "': " + left.type + " and " + right.type);
+        throw new ScriptExceptions.UnexpectedException(
+            "Unsupported operand types for '" + op + "': " + left.type + " and " + right.type
+        );
     }
 
     private Value evalUnaryOp(String op, Value inner) {
