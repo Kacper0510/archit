@@ -12,7 +12,7 @@ public class VariableListener extends ArchitBaseListener {
 
     @Override
     public void enterVarDecl(ArchitParser.VarDeclContext ctx){
-        variableTable.declareVariable(ctx.ID().getText(), ctx.type().getText());
+        variableTable.declareVariable(ctx.ID().getText(), ctx.type().getText(), ctx.getStart().getLine());
     }
 
 

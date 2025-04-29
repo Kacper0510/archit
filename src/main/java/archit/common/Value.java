@@ -3,10 +3,16 @@ package archit.common;
 public class Value {
     public Object value;
     public String type;
+    public int line;
 
-    public Value(Object value, String type) {
+    public Value(Object value, String type, int line) {
         this.value = value;
         this.type = type;
+        this.line = line;
+    }
+
+    public Value(Object value, String type) {
+        this(value, type, -1);
     }
 
     public int asNumber() {
