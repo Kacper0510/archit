@@ -1,0 +1,21 @@
+var x:number = 0;
+var y:number = 1;
+var fib:number = 0;
+
+repeat 15 {
+    fib = x;
+
+    move(0, 0, 2);
+    var counter:number = 0;
+    repeat fib {
+        place(:stone);
+        move($posy);
+        counter = counter - 1;
+    }
+    move(0, counter, 0);
+
+    //aktualizacja zmiennych
+    var temp:number = x + y;
+    x = y;
+    y = temp;
+}

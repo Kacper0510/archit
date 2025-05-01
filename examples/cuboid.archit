@@ -1,0 +1,26 @@
+//wymiary
+var width:number   = 12;   // szerokość
+var depth:number   = 8;    // głębokość
+var height:number  = 6;    // wysokość
+
+var yLevel:number = 0;
+repeat(height) {
+    //w głąb (oś Z)
+    var zLine:number = 0;
+    repeat(depth) {
+        //w poprzek (oś X)
+        var xPos:number = 0;
+        repeat(width) {
+            place(:polished_andesite);
+            xPos = xPos + 1;
+            move(1,0,0);
+        }
+        //cofamy się na początek szerokości, idziemy o 1 w głąb
+        move(-width,0,1);
+        zLine = zLine + 1;
+    }
+    //cofamy się w głąb do zera i podnosimy poziom o 1
+    move(0,0,-depth);
+    move(0,1,0);
+    yLevel = yLevel + 1;
+}
