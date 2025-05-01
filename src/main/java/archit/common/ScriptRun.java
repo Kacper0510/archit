@@ -5,7 +5,6 @@ import archit.parser.ArchitParser;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -91,29 +90,20 @@ public class ScriptRun {
 
         // usuwamy domyślne ErrorListenery i dodajemy nasze dla parsera i lexera
         parser.removeErrorListeners();
-        parser.addErrorListener(new ScriptErrorListener(this, interpreter.getLogger()));
+        parser.addErrorListener(new ScriptErrorListener(this));
         lexer.removeErrorListeners();
-        lexer.addErrorListener(new ScriptErrorListener(this, interpreter.getLogger()));
+        lexer.addErrorListener(new ScriptErrorListener(this));
 
         try {
             ArchitParser.ProgramContext tree = parser.program();
-
-            // przejście listenera po drzewie
-            VariableTable variableTable = new VariableTable();
-            VariableListener variableListener = new VariableListener(variableTable);
-            ParseTreeWalker walker = new ParseTreeWalker();
-            walker.walk(variableListener, tree);
-
             // stworzenie visitora i uruchomienie
-            ArchitVisitor visitor = new ArchitVisitor(interpreter, this, variableTable);
+            ArchitVisitor visitor = new ArchitVisitor(this);
             visitor.visit(tree);
-        } catch (ScriptErrorListener.SyntaxException e) {
-            return false;
-        } catch (ScriptExceptions e) {
-            interpreter.getLogger().scriptError(this, e.getMessage());
+        } catch (ScriptException e) {
             return false;
         } catch (RuntimeException e) {
             interpreter.getLogger().systemError(e, "Unknown visitor exception caught!");
+            interpreter.getLogger().scriptError(this, "Unknown exception: {}", e.getMessage());
             return false;
         }
 

@@ -4,11 +4,9 @@ import org.antlr.v4.runtime.*;
 
 public class ScriptErrorListener extends BaseErrorListener {
     private final ScriptRun run;
-    private final Logging logger;
 
-    public ScriptErrorListener(ScriptRun run, Logging logger) {
+    public ScriptErrorListener(ScriptRun run) {
         this.run = run;
-        this.logger = logger;
     }
 
     @Override
@@ -20,13 +18,6 @@ public class ScriptErrorListener extends BaseErrorListener {
             String msg,
             RecognitionException e
     ) {
-        logger.scriptError(run, "Syntax error at line {}, char {}: {}", line, charPositionInLine, msg);
-        throw new SyntaxException("Script aborted due to syntax error.");
-    }
-
-    public static class SyntaxException extends RuntimeException {
-        public SyntaxException(String message) {
-            super(message);
-        }
+        throw new ScriptException(run, ScriptException.Type.SYNTAX_ERROR, line, charPositionInLine, msg);
     }
 }

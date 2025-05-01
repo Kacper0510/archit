@@ -1,22 +1,16 @@
 package archit.common;
 
 import archit.parser.ArchitBaseVisitor;
-import archit.parser.ArchitParser;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+// TODO: Rewrite
 public class ArchitVisitor extends ArchitBaseVisitor<Void> {
-    private final Interpreter interpreter;
     private final ScriptRun run;
-    VariableTable variableTable;
 
-    ArchitVisitor(Interpreter interpreter, ScriptRun run, VariableTable variableTable) {
-        this.interpreter = interpreter;
+    public ArchitVisitor(ScriptRun run) {
         this.run = run;
-        this.variableTable = variableTable;
     }
 
+    /*
     @Override
     public Void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
         int iterations = evaluate(ctx.expr()).asNumber();
@@ -243,4 +237,5 @@ public class ArchitVisitor extends ArchitBaseVisitor<Void> {
         }
         throw new ScriptExceptions.UnexpectedException("Unknown unary operator: " + op);
     }
+    */
 }
