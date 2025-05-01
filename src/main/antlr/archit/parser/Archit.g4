@@ -23,8 +23,8 @@ scopeStat: '{' statement* '}';
 
 // Variables
 varDecl: 'var' ID ':' type '=' (expr | functionCallNoBrackets) ';';
-assignStat: ID assignment (expr | functionCallNoBrackets) ';';
-assignment: '=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=';
+assignStat
+    : ID op = ('=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=') (expr | functionCallNoBrackets) ';';
 
 type
     : 'number'
@@ -41,10 +41,9 @@ mapType: '|' type '->' type '|';
 enumType: '<' ID (',' ID)* '>';
 
 // If
-ifStat
-    : 'if' (expr | functionCallNoBrackets) scopeStat (
-        'else if' (expr | functionCallNoBrackets) scopeStat
-    )* ('else' scopeStat)?;
+ifStat: 'if' (expr | functionCallNoBrackets) scopeStat elseIfStat* elseStat?;
+elseIfStat: 'else if' (expr | functionCallNoBrackets) scopeStat;
+elseStat: 'else' scopeStat;
 
 // Expressions
 expr
@@ -57,20 +56,20 @@ expr
     | mapExpr
     | enumExpr
     | ID
-    | '(' expr ')'
-    | expr '[' expr ']'
-    | ('-' | 'not') expr
-    | expr '^' expr
-    | expr ('*' | '/' | '%') expr
-    | expr ('+' | '-') expr
-    | expr ('==' | '!=' | '>' | '>=' | '<' | '<=') expr
-    | expr ('and' | 'or') expr
+    | op = '(' expr ')'
+    | expr op = '[' expr ']'
+    | op = ('-' | 'not') expr
+    | expr op = '^' expr
+    | expr op = ('*' | '/' | '%') expr
+    | expr op = ('+' | '-') expr
+    | expr op = ('==' | '!=' | '>' | '>=' | '<' | '<=') expr
+    | expr op = ('and' | 'or') expr
     | functionCall;
 
 listExpr: '[' (expr (',' expr)*)? ']' | '#' materialExpr;
 mapExpr: '|' (expr '->' expr (',' expr '->' expr)*)? '|';
 enumExpr: '$' ID;
-materialExpr: ID ':' ID | ':' ID;
+materialExpr: ID? ':' ID;
 
 // Loops
 whileStat: 'while' (expr | functionCallNoBrackets) scopeStat;

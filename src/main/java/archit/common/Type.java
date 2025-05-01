@@ -36,14 +36,14 @@ public class Type {
     }
 
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         if (o instanceof Type) {
             return toString().equals(o.toString());
         }
         return false;
     }
 
-    public static class ListType extends Type {
+    public static class ListType extends Type {  // NOSONAR
         private final Type elements;
 
         private ListType(Type elements) {
@@ -66,7 +66,7 @@ public class Type {
         }
     }
 
-    public static class MapType extends Type {
+    public static class MapType extends Type {  // NOSONAR
         private final Type key;
         private final Type value;
 
@@ -120,6 +120,11 @@ public class Type {
         @Override
         public String toString() {
             return "<" + String.join(", ", members) + ">";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof LiteralType;
         }
 
         @Override
