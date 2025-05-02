@@ -24,14 +24,13 @@ scopeStat: '{' statement* '}';
 // Variables
 varDecl: 'var' ID ':' type '=' (expr | functionCallNoBrackets) ';';
 assignStat
-    : ID op = ('=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=') (expr | functionCallNoBrackets) ';';
+    : ID op = ('=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=') (
+        expr
+        | functionCallNoBrackets
+    ) ';';
 
 type
-    : 'number'
-    | 'real'
-    | 'logic'
-    | 'string'
-    | 'material'
+    : primitive = ('number' | 'real' | 'logic' | 'string' | 'material')
     | listType
     | mapType
     | enumType;

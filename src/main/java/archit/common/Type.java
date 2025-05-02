@@ -1,5 +1,6 @@
 package archit.common;
 
+import archit.parser.ArchitParser;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class Type {
     private final String name;
@@ -104,7 +106,7 @@ public class Type {
     public static class LiteralType extends Type {
         private final SortedSet<String> members;
 
-        public LiteralType(String[] members) {
+        private LiteralType(String[] members) {
             super("literal", String.class);
             this.members = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(members)));
         }
@@ -162,5 +164,28 @@ public class Type {
 
     public LiteralType asLiteralType() {
         return null;
+    }
+
+    public static Type fromTypeContext(ArchitParser.TypeContext ctx) {
+        if (ctx.listType() != null) {
+            var subtype = fromTypeContext(ctx.listType().type());
+            return list(subtype);
+        } else if (ctx.mapType() != null) {
+            var key = fromTypeContext(ctx.mapType().type(0));
+            var value = fromTypeContext(ctx.mapType().type(1));
+            return map(key, value);
+        } else if (ctx.enumType() != null) {
+            var members = ctx.enumType().ID().stream().map(TerminalNode::getText).toArray(String[] ::new);
+            return literal(members);
+        }
+
+        return switch (ctx.primitive.getText()) {
+            case "number" -> number;
+            case "real" -> real;
+            case "logic" -> logic;
+            case "string" -> string;
+            case "material" -> material;
+            default -> throw new IllegalArgumentException("Unknown type (did the grammar change?)");
+        };
     }
 }

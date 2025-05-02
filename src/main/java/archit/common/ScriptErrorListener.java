@@ -18,6 +18,9 @@ public class ScriptErrorListener extends BaseErrorListener {
             String msg,
             RecognitionException e
     ) {
+        if (run == null) {
+            throw e;
+        }
         throw new ScriptException(run, ScriptException.Type.SYNTAX_ERROR, line, charPositionInLine, msg);
     }
 }
