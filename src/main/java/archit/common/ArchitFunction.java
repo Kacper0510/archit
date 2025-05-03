@@ -1,13 +1,18 @@
-package archit.common.stdlib;
+package archit.common;
 
-import archit.common.ScriptRun;
-import archit.common.Type;
 import java.util.Arrays;
 
-public record ArchitFunction(String name, Type returnType, Type[] params, Callable callable) {
+public record ArchitFunction(  // NOSONAR
+    String name,
+    Type returnType,
+    Type[] params,
+    String[] paramNames,
+    Callable callable
+) {
     @Override
     public final int hashCode() {
-        Object[] fields = Arrays.copyOf(params, params.length + 2);
+        var fields = new Object[params.length + 2];
+        System.arraycopy(params, 0, fields, 0, params.length);
         fields[params.length] = name;
         fields[params.length + 1] = returnType;
         return Arrays.hashCode(fields);
