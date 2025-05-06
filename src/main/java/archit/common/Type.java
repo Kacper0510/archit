@@ -2,10 +2,10 @@ package archit.common;
 
 import archit.parser.ArchitParser;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -49,7 +49,7 @@ public class Type {
         private final Type elements;
 
         private ListType(Type elements) {
-            super("list", ArrayList.class);
+            super("list", List.class);
             this.elements = elements;
         }
 
@@ -73,7 +73,7 @@ public class Type {
         private final Type value;
 
         private MapType(Type key, Type value) {
-            super("map", HashMap.class);
+            super("map", Map.class);
             this.key = key;
             this.value = value;
         }

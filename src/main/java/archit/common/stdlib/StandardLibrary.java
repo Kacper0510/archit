@@ -23,6 +23,7 @@ import org.antlr.v4.runtime.RecognitionException;
 public class StandardLibrary {
     private static final Object[] COMMON_NATIVES = {
         new MathNatives(),
+        new BasicNatives(),
     };
 
     private final Map<String, Set<ArchitFunction>> registeredFunctions = new HashMap<>();
@@ -88,15 +89,17 @@ public class StandardLibrary {
         if (ctx.type() != null) {
             returnType = Type.fromTypeContext(ctx.type());
         }
-        Type[] params = ctx
-            .functionParams()
+        Type[] params = ctx.functionParams() == null
+            ? new Type[0]
+            : ctx.functionParams()
             .functionParam()
             .stream()
             .map(p -> p.type())
             .map(Type::fromTypeContext)
             .toArray(Type[]::new);
-        String[] paramNames = ctx
-            .functionParams()
+        String[] paramNames = ctx.functionParams() == null
+            ? new String[0]
+            : ctx.functionParams()
             .functionParam()
             .stream()
             .map(p -> p.ID().getText())
