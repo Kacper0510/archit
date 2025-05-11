@@ -2,6 +2,7 @@ package archit.common.stdlib;
 
 import archit.common.ArchitFunction;
 import archit.common.Logging;
+import archit.common.Scope;
 import archit.common.ScriptErrorListener;
 import archit.common.ScriptException;
 import archit.common.ScriptRun;
@@ -9,20 +10,23 @@ import archit.common.Type;
 import archit.common.natives.*;
 import archit.parser.ArchitLexer;
 import archit.parser.ArchitParser;
+import archit.parser.ArchitParser.FunctionDeclContext;
+import archit.parser.ArchitParser.FunctionParamContext;
+import archit.parser.ArchitParser.VarDeclContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
-
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
-public class StandardLibrary {
+public class StandardLibrary implements Scope {
     private static final Object[] COMMON_NATIVES = {
         new MathNatives(),
         new BasicNatives(),
@@ -157,5 +161,47 @@ public class StandardLibrary {
 
     public Map<String, Set<ArchitFunction>> getRegisteredFunctions() {
         return registeredFunctions;
+    }
+
+    @Override
+    public ArchitFunction resolveFunction(String name, Type[] params) {
+        if (registeredFunctions.containsKey(name)) {
+            var f =
+                registeredFunctions.get(name)
+                    .stream()
+                    .filter(x -> x.name().equals(name) && Arrays.equals(x.params(), params))
+                    .findAny();
+            if (f.isPresent()) {
+                return f.get();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Variable resolveVariable(String name) {
+        return null;
+    }
+
+    @Override
+    public boolean defineVariable(String name, Type type, int id, VarDeclContext ctx) {
+        throw new UnsupportedOperationException("Standard library cannot be extended with script-defined items");
+    }
+
+    @Override
+    public boolean defineVariable(String name, Type type, int id, FunctionParamContext ctx) {
+        throw new UnsupportedOperationException("Standard library cannot be extended with script-defined items");
+    }
+
+    @Override
+    public boolean defineFunction(
+        String name, Type returnType, Type[] params, String[] paramNames, FunctionDeclContext ctx
+    ) {
+        throw new UnsupportedOperationException("Standard library cannot be extended with script-defined items");
+    }
+
+    @Override
+    public Scope getParent() {
+        return null;
     }
 }

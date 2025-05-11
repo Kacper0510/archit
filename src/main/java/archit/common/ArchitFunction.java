@@ -12,10 +12,9 @@ public record ArchitFunction(  // NOSONAR
 ) {
     @Override
     public final int hashCode() {
-        var fields = new Object[params.length + 2];
+        var fields = new Object[params.length + 1];
         System.arraycopy(params, 0, fields, 0, params.length);
         fields[params.length] = name;
-        fields[params.length + 1] = returnType;
         return Arrays.hashCode(fields);
     }
 
@@ -26,9 +25,6 @@ public record ArchitFunction(  // NOSONAR
         }
         ArchitFunction other = (ArchitFunction) arg0;
         if (!name.equals(other.name)) {
-            return false;
-        }
-        if (!returnType.equals(other.returnType)) {
             return false;
         }
         return Arrays.equals(params, other.params);
