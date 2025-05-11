@@ -1,5 +1,6 @@
-package archit.common;
+package archit.common.visitors;
 
+import archit.common.ScriptRun;
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
 

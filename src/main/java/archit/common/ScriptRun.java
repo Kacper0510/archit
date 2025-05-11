@@ -1,5 +1,6 @@
 package archit.common;
 
+import archit.common.visitors.TypeCheckingVisitor;
 import archit.parser.ArchitLexer;
 import archit.parser.ArchitParser;
 import org.antlr.v4.runtime.CharStream;

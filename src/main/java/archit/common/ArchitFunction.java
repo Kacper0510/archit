@@ -7,7 +7,8 @@ public record ArchitFunction(  // NOSONAR
     Type returnType,
     Type[] params,
     String[] paramNames,
-    Callable callable
+    boolean isNative,
+    Object callInfo
 ) {
     @Override
     public final int hashCode() {
@@ -31,10 +32,5 @@ public record ArchitFunction(  // NOSONAR
             return false;
         }
         return Arrays.equals(params, other.params);
-    }
-
-    @FunctionalInterface
-    public interface Callable {
-        Object call(ScriptRun run, Object[] params);
     }
 }

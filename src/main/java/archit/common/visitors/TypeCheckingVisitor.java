@@ -1,6 +1,8 @@
-package archit.common;
+package archit.common.visitors;
 
 import archit.parser.ArchitParser;
+import archit.common.ScriptRun;
+import archit.common.Type;
 import archit.parser.ArchitBaseVisitor;
 
 public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {

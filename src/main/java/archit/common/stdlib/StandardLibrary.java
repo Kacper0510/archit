@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
@@ -125,7 +127,8 @@ public class StandardLibrary {
                 );
             }
         }
-        return new ArchitFunction(name, returnType, params, paramNames, (run, p) -> {
+
+        BiFunction<ScriptRun, Object[], Object> call = (run, p) -> {
             try {
                 var paramExt = new Object[1 + p.length];
                 paramExt[0] = run;
@@ -137,7 +140,8 @@ public class StandardLibrary {
                     "Native function caught an exception: {}", e.getMessage()
                 );
             }
-        });
+        };
+        return new ArchitFunction(name, returnType, params, paramNames, true, call);
     }  // clang-format on
 
     private static class TypeMismatchException extends Exception {
