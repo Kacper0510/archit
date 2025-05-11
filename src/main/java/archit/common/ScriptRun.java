@@ -97,8 +97,8 @@ public class ScriptRun {
         try {
             ArchitParser.ProgramContext tree = parser.program();
             // stworzenie visitora i uruchomienie
-            ArchitVisitor visitor = new ArchitVisitor(this);
-            visitor.visit(tree);
+            var typeChecker = new TypeCheckingVisitor(this);
+            typeChecker.visit(tree);
         } catch (ScriptException e) {
             return false;
         } catch (RuntimeException e) {

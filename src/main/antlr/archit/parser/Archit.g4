@@ -22,13 +22,15 @@ returnStat: 'return' expr ';';
 scopeStat: '{' statement* '}';
 
 // Variables
-varDecl: 'var' ID ':' type '=' (expr | functionCallNoBrackets) ';';
+symbol: ID;
+varDecl: 'var' symbol ':' type '=' (expr | functionCallNoBrackets) ';';
 assignStat
-    : ID op = ('=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=') (
+    : symbol op = ('=' | '+=' | '-=' | '*=' | '/=' | '^=' | '%=') (
         expr
         | functionCallNoBrackets
     ) ';';
 
+// Types
 type
     : primitive = ('number' | 'real' | 'logic' | 'string' | 'material')
     | listType
@@ -54,7 +56,7 @@ expr
     | listExpr
     | mapExpr
     | enumExpr
-    | ID
+    | symbol
     | op = '(' expr ')'
     | expr op = '[' expr ']'
     | op = ('-' | 'not') expr
@@ -62,7 +64,8 @@ expr
     | expr op = ('*' | '/' | '%') expr
     | expr op = ('+' | '-') expr
     | expr op = ('==' | '!=' | '>' | '>=' | '<' | '<=') expr
-    | expr op = ('and' | 'or') expr
+    | expr op = 'and' expr
+    | expr op = 'or' expr
     | functionCall;
 
 listExpr: '[' (expr (',' expr)*)? ']' | '#' materialExpr;
@@ -88,7 +91,7 @@ nativeDecl: 'native' ID '(' functionParams? ')' (':' type)? ';';
 functionParams: functionParam (',' functionParam)*;
 
 // Single function parameter: name and type
-functionParam: ID ':' type;
+functionParam: symbol ':' type;
 
 // Comments
 COMMENT: '/*' .*? '*/' -> channel(HIDDEN);

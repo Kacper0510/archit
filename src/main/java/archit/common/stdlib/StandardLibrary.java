@@ -102,7 +102,7 @@ public class StandardLibrary {
             : ctx.functionParams()
             .functionParam()
             .stream()
-            .map(p -> p.ID().getText())
+            .map(p -> p.symbol().ID().getText())
             .toArray(String[]::new);
         
         if (returnType != null && !returnType.getEquivalent().equals(method.getReturnType())) {
