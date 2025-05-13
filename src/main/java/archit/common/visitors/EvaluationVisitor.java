@@ -63,7 +63,7 @@ public class EvaluationVisitor {
         }
 
         if (ctx.REAL() != null) {
-            objects.add(objects.add(Double.parseDouble(ctx.REAL().getText().replace("_", ""))));
+            objects.add(Double.parseDouble(ctx.REAL().getText().replace("_", "")));
             return;
         }
 
@@ -195,6 +195,16 @@ public class EvaluationVisitor {
 
     public void visitProgram(ArchitParser.ProgramContext ctx) {
         // TODO (emil)
+        var stmts = ctx.statement();
+        for (int i = stmts.size() - 1; i >= 0; i--) {
+            var s = stmts.get(i);
+            Runnable r = () -> visitStatement(s);
+            calls.add(r);
+        }
+        return;
+    }
+
+    public void visitStatement(ArchitParser.StatementContext ctx) {
         return;
     }
 
