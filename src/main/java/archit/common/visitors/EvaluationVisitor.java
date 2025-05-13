@@ -4,127 +4,223 @@ import archit.common.ScriptRun;
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
 
-public class EvaluationVisitor extends ArchitBaseVisitor<Object> {
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class EvaluationVisitor {
     private final ScriptRun run;
     private final InfoTables tables;
+
+    //stosy
+    public final Map<Integer, Object> variables = new HashMap<>();
+    public final List<Runnable> calls = new ArrayList<>();
+    public final List<Object> objects = new ArrayList<>();
 
     public EvaluationVisitor(ScriptRun run, InfoTables tables) {
         this.run = run;
         this.tables = tables;
     }
 
-    @Override
-    public Object visitAssignStat(ArchitParser.AssignStatContext ctx) {
+    public void visitAssignStat(ArchitParser.AssignStatContext ctx) {
         // TODO (emil)
-        return super.visitAssignStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitBreakStat(ArchitParser.BreakStatContext ctx) {
+    public void visitBreakStat(ArchitParser.BreakStatContext ctx) {
         // TODO (emil)
-        return super.visitBreakStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitContinueStat(ArchitParser.ContinueStatContext ctx) {
+    public void visitContinueStat(ArchitParser.ContinueStatContext ctx) {
         // TODO (emil)
-        return super.visitContinueStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitElseIfStat(ArchitParser.ElseIfStatContext ctx) {
+    public void visitElseIfStat(ArchitParser.ElseIfStatContext ctx) {
         // TODO (emil)
-        return super.visitElseIfStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitElseStat(ArchitParser.ElseStatContext ctx) {
+    public void visitElseStat(ArchitParser.ElseStatContext ctx) {
         // TODO (emil)
-        return super.visitElseStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitEnumExpr(ArchitParser.EnumExprContext ctx) {
+    public void visitEnumExpr(ArchitParser.EnumExprContext ctx) {
         // TODO (emil)
-        return super.visitEnumExpr(ctx);
+        return;
     }
 
-    @Override
-    public Object visitExpr(ArchitParser.ExprContext ctx) {
+    public void visitExpr(ArchitParser.ExprContext ctx) {
         // TODO (emil)
-        return super.visitExpr(ctx);
+        if (ctx.NUMBER() != null) {
+            objects.add(new BigInteger(ctx.NUMBER().getText().replace("_", ""))); // "_" czyli wsparcie dla wiekszych liczb
+            return;
+        }
+
+        if (ctx.REAL() != null) {
+            objects.add(objects.add(Double.parseDouble(ctx.REAL().getText().replace("_", ""))));
+            return;
+        }
+
+        if (ctx.LOGIC() != null) {
+            objects.add(Boolean.parseBoolean(ctx.LOGIC().getText()));
+            return;
+        }
+
+        if (ctx.STRING() != null) {
+            String fullText = ctx.STRING().getText();
+            objects.add(fullText.substring(1, fullText.length() - 1));  //usuwanie cudzysłowów
+            return;
+        }
+
+        //operator
+        Operators op = tables.getOperators().get(ctx);
+
+        //Unarne
+        // 1) not
+        if (ctx.expr().size() == 1 && op == Operators.NOT) {
+            // nadpisanie ostatniego elementu stosu objects jego negacją
+            calls.add(() -> {
+                Boolean v = (Boolean) objects.removeLast();
+                objects.add(!v);
+            });
+            // rekurencja w celu pełnego obliczenia podwyrażeń expr
+            calls.add(() -> visitExpr(ctx.expr(0)));
+            return;
+        }
+        // 2) minus
+        if (ctx.expr().size() == 1 && ctx.op.getText().equals("-")) {   //do zamiany na if (ctx.expr().size() == 1 && op == Operators.UNARY_MINUS)
+            calls.add(() -> {
+                if (objects.getLast() instanceof BigInteger) {
+                    BigInteger v = (BigInteger) objects.removeLast();
+                    objects.add(v.negate());
+                }
+                else if (objects.getLast() instanceof Double) {
+                    Double v = (Double) objects.removeLast();
+                    objects.add(-v);
+                }
+            });
+
+            calls.add(() -> visitExpr(ctx.expr(0)));
+            return;
+        }
+
+
+        //Binarne
+        if (ctx.expr().size() == 2 && op != null) {
+            var left = ctx.expr(0);
+            var right = ctx.expr(1);
+            calls.add(() -> {
+                switch (op) {
+                    case ADD_NUMBERS -> {
+                        var leftResult = (BigInteger) objects.removeLast();
+                        var rightResult = (BigInteger) objects.removeLast();
+                        objects.add(leftResult.add(rightResult));
+                    }
+
+                    case ADD_REALS -> {
+                        var leftResult = (Double) objects.removeLast();
+                        var rightResult = (Double) objects.removeLast();
+                        objects.add(leftResult + rightResult);
+                    }
+
+                    case SUBTRACT_NUMBERS -> {
+                        var leftResult = (BigInteger) objects.removeLast();
+                        var rightResult = (BigInteger) objects.removeLast();
+                        objects.add(leftResult.subtract(rightResult));
+                    }
+
+                    case SUBTRACT_REALS -> {
+                        var leftResult = (Double) objects.removeLast();
+                        var rightResult = (Double) objects.removeLast();
+                        objects.add(leftResult - rightResult);
+                    }
+
+                    case AND -> {
+                        var leftResult = (Boolean) objects.removeLast();
+                        var rightResult = (Boolean) objects.removeLast();
+                        objects.add(leftResult && rightResult);
+                    }
+
+                    case OR -> {
+                        var leftResult = (Boolean) objects.removeLast();
+                        var rightResult = (Boolean) objects.removeLast();
+                        objects.add(leftResult || rightResult);
+                    }
+
+                }
+            });
+
+            calls.add(() -> visitExpr(right));
+            calls.add(() -> visitExpr(left));
+            return;
+        }
     }
 
-    @Override
-    public Object visitFunctionCall(ArchitParser.FunctionCallContext ctx) {
+
+    public void visitFunctionCall(ArchitParser.FunctionCallContext ctx) {
         // TODO (emil)
-        return super.visitFunctionCall(ctx);
+        return;
     }
 
-    @Override
-    public Object visitFunctionCallNoBrackets(ArchitParser.FunctionCallNoBracketsContext ctx) {
+    public void visitFunctionCallNoBrackets(ArchitParser.FunctionCallNoBracketsContext ctx) {
         // TODO (emil)
-        return super.visitFunctionCallNoBrackets(ctx);
+        return;
     }
 
-    @Override
-    public Object visitIfStat(ArchitParser.IfStatContext ctx) {
+    public void visitIfStat(ArchitParser.IfStatContext ctx) {
         // TODO (emil)
-        return super.visitIfStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitListExpr(ArchitParser.ListExprContext ctx) {
+    public void visitListExpr(ArchitParser.ListExprContext ctx) {
         // TODO (emil)
-        return super.visitListExpr(ctx);
+        return;
     }
 
-    @Override
-    public Object visitMapExpr(ArchitParser.MapExprContext ctx) {
+    public void visitMapExpr(ArchitParser.MapExprContext ctx) {
         // TODO (emil)
-        return super.visitMapExpr(ctx);
+        return;
     }
 
-    @Override
-    public Object visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {
+    public void visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {
         // TODO (emil)
-        return super.visitMaterialExpr(ctx);
+        return;
     }
 
-    @Override
-    public Object visitProgram(ArchitParser.ProgramContext ctx) {
+    public void visitProgram(ArchitParser.ProgramContext ctx) {
         // TODO (emil)
-        return super.visitProgram(ctx);
+        return;
     }
 
-    @Override
-    public Object visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
+    public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
         // TODO (emil)
-        return super.visitRepeatStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitReturnStat(ArchitParser.ReturnStatContext ctx) {
+    public void visitReturnStat(ArchitParser.ReturnStatContext ctx) {
         // TODO (emil)
-        return super.visitReturnStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitScopeStat(ArchitParser.ScopeStatContext ctx) {
+    public void visitScopeStat(ArchitParser.ScopeStatContext ctx) {
         // TODO (emil)
-        return super.visitScopeStat(ctx);
+        return;
     }
 
-    @Override
-    public Object visitVarDecl(ArchitParser.VarDeclContext ctx) {
+    public void visitVarDecl(ArchitParser.VarDeclContext ctx) {
         // TODO (emil)
-        return super.visitVarDecl(ctx);
+        return;
     }
 
-    @Override
-    public Object visitWhileStat(ArchitParser.WhileStatContext ctx) {
+    public void visitWhileStat(ArchitParser.WhileStatContext ctx) {
         // TODO (emil)
-        return super.visitWhileStat(ctx);
+        return;
     }
 
     /*
