@@ -1,10 +1,10 @@
 package archit.common.visitors;
 
 import archit.common.ScriptRun;
-import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
+import archit.parser.ArchitParserBaseVisitor;
 
-public class EvaluationVisitor extends ArchitBaseVisitor<Object> {
+public class EvaluationVisitor extends ArchitParserBaseVisitor<Object> {
     private final ScriptRun run;
     private final InfoTables tables;
 
