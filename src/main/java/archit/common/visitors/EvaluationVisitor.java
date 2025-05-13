@@ -289,6 +289,26 @@ public class EvaluationVisitor {
 
     public void visitVarDecl(ArchitParser.VarDeclContext ctx) {
         // TODO (emil)
+        var id = tables.getSymbols().get(ctx.symbol());
+
+        //czy tutaj trzeba nam jakis warunek który wyłapie przypadek var x: number = x;?
+        //bo wtedy sięgamy do zmiennej która już niby istnieje ale tak na prawde nie istnieje
+        //bo tworzymy dopiero gdy obliczymy jej wartość (przez to ze nie mamy nulli)
+
+        //po obliczeniu wartości zmiennej zapisuje ją
+        calls.add(() -> {
+            Object value = objects.removeLast();
+            variables.put(id, value);
+        });
+
+        //pierw ma obliczyć wartość zmiennej
+        if (ctx.expr() != null) {
+            calls.add(() -> visitExpr(ctx.expr()));
+        }
+        //jesli nie expr() to musi być functionCallNoBrackets
+        else {
+            calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
+        }
         return;
     }
 
