@@ -173,6 +173,11 @@ public class EvaluationVisitor {
         return;
     }
 
+    public void visitFunctionDecl(ArchitParser.FunctionDeclContext ctx) {
+        // TODO (emil)
+        return;
+    }
+
     public void visitIfStat(ArchitParser.IfStatContext ctx) {
         // TODO (emil)
         return;
@@ -205,7 +210,66 @@ public class EvaluationVisitor {
     }
 
     public void visitStatement(ArchitParser.StatementContext ctx) {
-        return;
+
+        if(ctx.functionDecl() != null) {
+            visitFunctionDecl(ctx.functionDecl());
+            return;
+        }
+
+        if(ctx.functionCall() != null) {
+            visitFunctionCall(ctx.functionCall());
+            return;
+        }
+
+        if(ctx.functionCallNoBrackets() != null) {
+            visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
+            return;
+        }
+
+        if(ctx.varDecl() != null) {
+            visitVarDecl(ctx.varDecl());
+            return;
+        }
+
+        if(ctx.assignStat() != null) {
+            visitAssignStat(ctx.assignStat());
+            return;
+        }
+
+        if(ctx.ifStat() != null) {
+            visitIfStat(ctx.ifStat());
+            return;
+        }
+
+        if(ctx.whileStat() != null) {
+            visitWhileStat(ctx.whileStat());
+            return;
+        }
+
+        if(ctx.repeatStat() != null) {
+            visitRepeatStat(ctx.repeatStat());
+            return;
+        }
+
+        if(ctx.breakStat() != null) {
+            visitBreakStat(ctx.breakStat());
+            return;
+        }
+
+        if(ctx.continueStat() != null) {
+            visitContinueStat(ctx.continueStat());
+            return;
+        }
+
+        if(ctx.returnStat() != null) {
+            visitReturnStat(ctx.returnStat());
+            return;
+        }
+
+        if(ctx.scopeStat() != null) {
+            visitScopeStat(ctx.scopeStat());
+            return;
+        }
     }
 
     public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
