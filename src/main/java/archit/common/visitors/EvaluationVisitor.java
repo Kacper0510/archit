@@ -3,6 +3,8 @@ package archit.common.visitors;
 import archit.common.ScriptRun;
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.llamalad7.mixinextras.lib.apache.commons.ObjectUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -27,6 +29,47 @@ public class EvaluationVisitor {
 
     public void visitAssignStat(ArchitParser.AssignStatContext ctx) {
         // TODO (emil)
+        var symbol = ctx.symbol();
+        var id = tables.getSymbols().get(symbol);
+        Object value = variables.get(id);
+        var op = ctx.op.getText();  //mapa ExprToOperators dopuszcza tylko expr, wiec w tym przypadku ma być tak?
+
+
+        //po obliczeniu wartości zmiennej zapisuje ją do variables
+        calls.add(() -> {
+            Object exprValue = objects.removeLast();
+            Object result;
+
+            switch (op){
+                case "=" -> {
+                    variables.put(id, exprValue);
+                }
+
+                case "+=" -> {
+                    if (value instanceof BigInteger && exprValue instanceof BigInteger) {
+                        result = ((BigInteger) value).add((BigInteger) exprValue);
+                    }
+                    // w innym przypadku musi to być Double
+                    else {
+                        assert value instanceof Double;
+                        result = ((Double) value) + ((Double) exprValue);
+                    }
+
+                    variables.put(id, result);
+                }
+            }
+
+        });
+
+        //obliczanie expr albo functionCallNoBrackets
+        if (ctx.expr() != null) {
+            calls.add(() -> visitExpr(ctx.expr()));
+        }
+        //jesli nie expr() to musi być functionCallNoBrackets
+        else {
+            calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
+        }
+
         return;
     }
 
