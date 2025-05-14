@@ -73,12 +73,6 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     }
 
     @Override
-    public Type visitElseIfStat(ArchitParser.ElseIfStatContext ctx) {
-        // TODO (dawid)
-        throw new UnsupportedOperationException("Unimplemented method 'visitElseIfStat'");
-    }
-
-    @Override
     public Type visitElseStat(ArchitParser.ElseStatContext ctx) {
         // TODO (dawid)
         throw new UnsupportedOperationException("Unimplemented method 'visitElseStat'");

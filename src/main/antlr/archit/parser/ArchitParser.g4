@@ -39,9 +39,8 @@ mapType: MAP type ARROW type MAP;
 enumType: ANGLE_OPEN ID (COMMA ID)* ANGLE_CLOSE;
 
 // If
-ifStat: IF (expr | functionCallNoBrackets) scopeStat elseIfStat* elseStat?;
-elseIfStat: ELSE IF (expr | functionCallNoBrackets) scopeStat;
-elseStat: ELSE scopeStat;
+ifStat: IF (expr | functionCallNoBrackets) scopeStat elseStat?;
+elseStat: ELSE (scopeStat | ifStat);
 
 // Expressions
 expr

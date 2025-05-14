@@ -32,12 +32,6 @@ public class EvaluationVisitor extends ArchitParserBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitElseIfStat(ArchitParser.ElseIfStatContext ctx) {
-        // TODO (emil)
-        return super.visitElseIfStat(ctx);
-    }
-
-    @Override
     public Object visitElseStat(ArchitParser.ElseStatContext ctx) {
         // TODO (emil)
         return super.visitElseStat(ctx);
