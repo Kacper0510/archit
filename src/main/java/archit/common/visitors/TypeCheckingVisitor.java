@@ -40,9 +40,10 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, fmt, args);
     }
 
-    protected void error(ParserRuleContext ctx, String message, Object... args) {
+    private void error(ParserRuleContext ctx, String message, Object... args) {
         String formatted = java.text.MessageFormat.format(message, args);
-        System.err.printf("ERROR at line %d: {}\n", ctx.getStart().getLine(), formatted);
+        int line = ctx.getStart().getLine();
+        throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "ERROR at line " + line + ": " + formatted);
     }
 
     @Override
