@@ -414,40 +414,40 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 case ">":
                     if (left.equals(Type.number) && right.equals(Type.number)) {
                         tables.addOperatorMapping(ctx, Operators.GREATER_NUMBERS);
-                        return Type.number;
+                        return Type.logic;
                     } else if (left.equals(Type.real) && right.equals(Type.real)) {
                         tables.addOperatorMapping(ctx, Operators.GREATER_REALS);
-                        return Type.real;
+                        return Type.logic;
                     }
                     break;
 
                 case ">=":
                     if (left.equals(Type.number) && right.equals(Type.number)) {
                         tables.addOperatorMapping(ctx, Operators.GREATER_EQUALS_NUMBERS);
-                        return Type.number;
+                        return Type.logic;
                     } else if (left.equals(Type.real) && right.equals(Type.real)) {
                         tables.addOperatorMapping(ctx, Operators.GREATER_EQUALS_REALS);
-                        return Type.real;
+                        return Type.logic;
                     }
                     break;
 
                 case "<":
                     if (left.equals(Type.number) && right.equals(Type.number)) {
                         tables.addOperatorMapping(ctx, Operators.LESS_NUMBERS);
-                        return Type.number;
+                        return Type.logic;
                     } else if (left.equals(Type.real) && right.equals(Type.real)) {
                         tables.addOperatorMapping(ctx, Operators.LESS_REALS);
-                        return Type.real;
+                        return Type.logic;
                     }
                     break;
 
                 case "<=":
                     if (left.equals(Type.number) && right.equals(Type.number)) {
                         tables.addOperatorMapping(ctx, Operators.LESS_EQUALS_NUMBERS);
-                        return Type.number;
+                        return Type.logic;
                     } else if (left.equals(Type.real) && right.equals(Type.real)) {
                         tables.addOperatorMapping(ctx, Operators.LESS_EQUALS_REALS);
-                        return Type.real;
+                        return Type.logic;
                     }
                     break;
 

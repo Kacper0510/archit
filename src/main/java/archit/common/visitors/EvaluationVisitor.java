@@ -137,6 +137,11 @@ public class EvaluationVisitor {
             return;
         }
 
+        if (ctx.materialExpr() != null) {
+            calls.add(() -> visitMaterialExpr(ctx.materialExpr()));
+            return;
+        }
+
         //operator
         Operators op = tables.getOperators().get(ctx);
 
@@ -159,8 +164,8 @@ public class EvaluationVisitor {
             var right = ctx.expr(1);
 
             calls.add(() -> {
-                var leftResult = objects.removeLast();
                 var rightResult = objects.removeLast();
+                var leftResult = objects.removeLast();
                 if (op == Operators.DIVIDE_NUMBERS && ((BigInteger) rightResult).longValue() == 0) {
                     throw new ScriptException(run, ScriptException.Type.RUNTIME_ERROR, ctx, "Division by zero");
                 }
@@ -387,8 +392,8 @@ public class EvaluationVisitor {
     public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
 
         calls.add(() -> {
-            long howMany = (long) objects.removeLast();
-            for (long i = 0; i < howMany ; i++) {
+            var howMany = (BigInteger) objects.removeLast();
+            for (long i = 0; i < howMany.longValue(); i++) {
                 calls.add(() -> {
                     visitScopeStat(ctx.scopeStat());
                 });

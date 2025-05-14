@@ -18,7 +18,7 @@ public interface Logging {
         var result = new ArrayList<String>();
         result.add(split[0]);
         for (int i = 0; i < objects.length; i++) {
-            result.add(objects[i].toString());
+            result.add(objects[i] == null ? "null" : objects[i].toString());
             result.add(split[i + 1]);
         }
         return result;
