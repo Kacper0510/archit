@@ -1,4 +1,3 @@
-
 package archit.common.visitors;
 
 import archit.common.*;
@@ -96,12 +95,71 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         if (varRes == null) {
             error(ctx.symbol(), "Variable '{}' not defined", name);
         }
+
         Type lhs = varRes.type();
         Type rhs = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
-        if (!rhs.equals(lhs)) {
-            error(ctx, "Cannot assign {} to '{}' of type {}", rhs, name, lhs);
-        }
         tables.addSymbolMapping(ctx.symbol(), varRes.id());
+            String op = ctx.op.getText();
+            switch (op) {
+                case "=" -> {
+                    if (lhs.equals(rhs)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN);
+                        return null;
+                    }
+                }
+                case "+=" -> {
+                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_ADD_NUMBERS);
+                        return null;
+                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_ADD_REALS);
+                        return null;
+                    }
+                }
+                case "-=" -> {
+                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_SUBTRACT_NUMBERS);
+                        return null;
+                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_SUBTRACT_REALS);
+                        return null;
+                    }
+                }
+                case "*=" -> {
+                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_MULTIPLY_NUMBERS);
+                        return null;
+                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_MULTIPLY_REALS);
+                        return null;
+                    }
+                }
+                case "/=" -> {
+                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_DIVIDE_NUMBERS);
+                        return null;
+                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_DIVIDE_REALS);
+                        return null;
+                    }
+                }
+                case "%=" -> {
+                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_MODULO);
+                        return null;
+                    }
+                }
+                case "^=" -> {
+                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_POWER_NUMBERS);
+                        return null;
+                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                        tables.addOperatorMapping(ctx, Operators.ASSIGN_POWER_REALS);
+                        return null;
+                    }
+                }
+            }
+        error(ctx, "Cannot use operator {} with type {} to '{}' of type {}", op, rhs, name, lhs);
         return null;
     }
 
