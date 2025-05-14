@@ -3,10 +3,10 @@ package archit.common.visitors;
 import archit.common.Scope;
 import archit.common.ScriptRun;
 import archit.common.Type;
-import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
+import archit.parser.ArchitParserBaseVisitor;
 
-public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
+public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     private final ScriptRun run;
     private final InfoTables tables = new InfoTables();
     private Scope currentScope;
@@ -70,12 +70,6 @@ public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
     public Type visitIfStat(ArchitParser.IfStatContext ctx) {
         // TODO (dawid)
         throw new UnsupportedOperationException("Unimplemented method 'visitIfStat'");
-    }
-
-    @Override
-    public Type visitElseIfStat(ArchitParser.ElseIfStatContext ctx) {
-        // TODO (dawid)
-        throw new UnsupportedOperationException("Unimplemented method 'visitElseIfStat'");
     }
 
     @Override

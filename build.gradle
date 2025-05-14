@@ -13,7 +13,7 @@ application {
 
 generateGrammarSource {
 	arguments += [
-		"-package", "archit.parser", "-visitor"
+		'-package', 'archit.parser', '-visitor', '-Xexact-output-dir'
 	]
 }
 
