@@ -188,7 +188,13 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
 
     @Override
     public Type visitElseStat(ArchitParser.ElseStatContext ctx) {
-        visit(ctx.scopeStat());
+        if(ctx.scopeStat() != null){
+            visit(ctx.scopeStat());
+        }
+        else{
+            visit(ctx.ifStat());
+        }
+
         return null;
     }
 
