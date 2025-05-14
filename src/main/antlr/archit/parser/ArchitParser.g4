@@ -56,10 +56,10 @@ expr
     | symbol
     | op = BRACE_OPEN expr BRACE_CLOSE
     | expr op = SQUARE_OPEN expr SQUARE_CLOSE
-    | op = UNARY_OP expr
+    | op = (MINUS | NOT) expr
     | expr op = POWER expr
     | expr op = MULTIPLY_OPS expr
-    | expr op = ADDITION_OPS expr
+    | expr op = (MINUS | PLUS) expr
     | expr op = (ANGLE_CLOSE | ANGLE_OPEN | COMPARE) expr
     | expr op = AND expr
     | expr op = OR expr
