@@ -4,7 +4,9 @@ package archit.common.visitors;
 import archit.common.*;
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,6 +42,13 @@ public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
     private void error(ArchitParser.SymbolContext ctx, String fmt, Object... args) {
         throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, fmt, args);
     }
+
+    protected void error(ParserRuleContext ctx, String message, Object... args) {
+        System.err.printf("ERROR at %s: ", ctx.getStart().getLine());
+        System.err.printf(message, args);
+        System.err.println();
+    }
+
 
     @Override
     public Type visitReturnStat(ArchitParser.ReturnStatContext ctx) {
@@ -94,7 +103,7 @@ public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
     @Override
     public Type visitSymbol(ArchitParser.SymbolContext ctx) {
         String name = ctx.ID().getText();
-        archit.common.visitors.Variable var;
+        Scope.Variable var;
         try {
             var = currentScope.resolveVariable(name);
         } catch (RuntimeException e) {
@@ -403,7 +412,7 @@ public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
         List<Type> elems = ctx.expr().stream().map(this::visit).collect(Collectors.toList());
         if (ctx.getText().startsWith("#")) {
             Type t = visit(ctx.materialExpr());
-            tables.addOperatorMapping(ctx, Operators.LENGTH);
+            tables.addOperatorMapping(ctx, Operators.LIST_INDEX);
             return Type.list(t);
         } else {
             if (elems.isEmpty()) {
