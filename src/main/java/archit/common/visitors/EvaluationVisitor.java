@@ -2,12 +2,8 @@ package archit.common.visitors;
 
 import archit.common.ScriptRun;
 import archit.common.ArchitFunction;
-import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.llamalad7.mixinextras.lib.apache.commons.ObjectUtils;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -197,24 +193,24 @@ public class EvaluationVisitor {
         }
     }
 
-
+    @SuppressWarnings("unchecked")
     public void visitFunctionCall(ArchitParser.FunctionCallContext ctx) {
         ArchitFunction function = tables.getFunctions().get(ctx);
 
         //po obliczonych argumentach funkcji, wywołujemy ją
         calls.add(() -> {
-            List<Object> args = new ArrayList<>();
-            for (int i = 0; i < ctx.expr().size(); i++) {
-                args.add(0, objects.removeLast());
+            int n = ctx.expr().size();
+            Object[] args = new Object[n];
+            for (int i = 0; i < n; i++) {
+                args[i] = objects.removeLast();
             }
 
             Object result;
 
             if (function.isNative()) {
-                @SuppressWarnings("unchecked")  //ja sobie stłumiłem automatycznie ten warning ale to chyba powinno być aby ogólnie go nie było
                 //kolejno: scriptRun, lista argumentów, typ zwracany
-                BiFunction<ScriptRun, List<Object>, Object> impl =
-                        (BiFunction<ScriptRun, List<Object>, Object>) function.callInfo();
+                BiFunction<ScriptRun, Object[], Object> impl =
+                        (BiFunction<ScriptRun, Object[], Object>) function.callInfo();
                 result = impl.apply(run, args);
             }
 
@@ -223,6 +219,7 @@ public class EvaluationVisitor {
                 // TODO (emil)
             }
 
+            //objects.add(result);
         });
 
         //pierw obliczamy wszystkie argumenty funkcji
@@ -247,22 +244,30 @@ public class EvaluationVisitor {
 
     public void visitIfStat(ArchitParser.IfStatContext ctx) {
         // TODO (emil)
+        //po obliczonym warunku wykona się to
         calls.add(() -> {
-            //obliczenie warunku
-            if (ctx.expr() != null) {
-                visitExpr(ctx.expr());
-            } else {
-                visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
-            }
-
             //ściągnięcie wyniku ze stosu
             Boolean cond = (Boolean) objects.removeLast();
 
             //jesli if spelniony to wykonaj to co jest w scope i zakoncz
             if (cond) {
-                visitScopeStat(ctx.scopeStat());
+                calls.add(() -> visitScopeStat(ctx.scopeStat()));
                 return;
             }
+        });
+
+        //pierw obliczy się warunek
+        calls.add(() -> {
+            //obliczenie warunku
+            if (ctx.expr() != null) {
+                calls.add(() -> visitExpr(ctx.expr()));
+            }
+            else {
+                calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
+            }
+
+
+
 
             for (var elseif : ctx.elseIfStat()) {
                 if (elseif.expr() != null) {
@@ -313,62 +318,62 @@ public class EvaluationVisitor {
     public void visitStatement(ArchitParser.StatementContext ctx) {
 
         if(ctx.functionDecl() != null) {
-            visitFunctionDecl(ctx.functionDecl());
+            calls.add(() -> visitFunctionDecl(ctx.functionDecl()));
             return;
         }
 
         if(ctx.functionCall() != null) {
-            visitFunctionCall(ctx.functionCall());
+            calls.add(() -> visitFunctionCall(ctx.functionCall()));
             return;
         }
 
         if(ctx.functionCallNoBrackets() != null) {
-            visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
+            calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
             return;
         }
 
         if(ctx.varDecl() != null) {
-            visitVarDecl(ctx.varDecl());
+            calls.add(() -> visitVarDecl(ctx.varDecl()));
             return;
         }
 
         if(ctx.assignStat() != null) {
-            visitAssignStat(ctx.assignStat());
+            calls.add(() -> visitAssignStat(ctx.assignStat()));
             return;
         }
 
         if(ctx.ifStat() != null) {
-            visitIfStat(ctx.ifStat());
+            calls.add(() -> visitIfStat(ctx.ifStat()));
             return;
         }
 
         if(ctx.whileStat() != null) {
-            visitWhileStat(ctx.whileStat());
+            calls.add(() -> visitWhileStat(ctx.whileStat()));
             return;
         }
 
         if(ctx.repeatStat() != null) {
-            visitRepeatStat(ctx.repeatStat());
+            calls.add(() -> visitRepeatStat(ctx.repeatStat()));
             return;
         }
 
         if(ctx.breakStat() != null) {
-            visitBreakStat(ctx.breakStat());
+            calls.add(() -> visitBreakStat(ctx.breakStat()));
             return;
         }
 
         if(ctx.continueStat() != null) {
-            visitContinueStat(ctx.continueStat());
+            calls.add(() -> visitContinueStat(ctx.continueStat()));
             return;
         }
 
         if(ctx.returnStat() != null) {
-            visitReturnStat(ctx.returnStat());
+            calls.add(() -> visitReturnStat(ctx.returnStat()));
             return;
         }
 
         if(ctx.scopeStat() != null) {
-            visitScopeStat(ctx.scopeStat());
+            calls.add(() -> visitScopeStat(ctx.scopeStat()));
             return;
         }
     }
@@ -412,10 +417,6 @@ public class EvaluationVisitor {
     public void visitVarDecl(ArchitParser.VarDeclContext ctx) {
         // TODO (emil)
         var id = tables.getSymbols().get(ctx.symbol());
-
-        //czy tutaj trzeba nam jakis warunek który wyłapie przypadek var x: number = x;?
-        //bo wtedy sięgamy do zmiennej która już niby istnieje ale tak na prawde nie istnieje
-        //bo tworzymy dopiero gdy obliczymy jej wartość (przez to ze nie mamy nulli)
 
         //po obliczeniu wartości zmiennej zapisuje ją
         calls.add(() -> {
