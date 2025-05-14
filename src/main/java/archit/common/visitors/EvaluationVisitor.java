@@ -375,6 +375,27 @@ public class EvaluationVisitor {
 
     public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
         // TODO (emil)
+
+        calls.add(() -> {
+            long howMany = (long) objects.removeLast();
+            for (long i = 0; i < howMany ; i++) {
+                calls.add(() -> {
+                    visitScopeStat(ctx.scopeStat());
+                });
+            }
+        });
+
+
+        //obliczanie wyrażenia
+        calls.add(() -> {
+            if (ctx.expr() != null){
+                visitExpr(ctx.expr());
+            }
+            else{
+                visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
+            }
+        });
+
         return;
     }
 
