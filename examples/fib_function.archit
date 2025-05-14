@@ -1,0 +1,17 @@
+function fib(n: number): number {
+    if (n == 1) {
+        return 0;
+    }
+    else if (n == 2) {
+        return 1;
+    }
+    else {
+        return fibPrint(n - 1) + fibPrint(n - 2);
+    }
+}
+
+var n: number = 10;
+var i: number = 1;
+while i <= n {
+    print(fib(i));
+    i += 1;
