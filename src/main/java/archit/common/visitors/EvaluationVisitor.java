@@ -5,10 +5,7 @@ import archit.common.ArchitFunction;
 import archit.parser.ArchitParser;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
 
 public class EvaluationVisitor {
@@ -269,8 +266,24 @@ public class EvaluationVisitor {
     }
 
     public void visitListExpr(ArchitParser.ListExprContext ctx) {
-        // TODO (emil)
-        return;
+        //po wyliczeniu elementów tworzymy tą listę i dodajemy na stos objects
+        calls.add(() -> {
+            int count = ctx.expr().size();
+            List<Object> list = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                list.add(objects.removeLast());
+            }
+            //odwracamy liste by kolejnosc byla prawidlowa
+            Collections.reverse(list);
+            objects.add(list);
+        });
+
+
+        //pierw wyliczamy wszystkie elementy listy
+        for (int i = ctx.expr().size() - 1; i >= 0; i--) {
+            var el = ctx.expr().get(i);
+            calls.add(() -> visitExpr(el));
+        }
     }
 
     public void visitMapExpr(ArchitParser.MapExprContext ctx) {
