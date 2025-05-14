@@ -41,17 +41,38 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     }
 
     protected void error(ParserRuleContext ctx, String message, Object... args) {
-        System.err.printf("ERROR at %s: ", ctx.getStart().getLine());
-        System.err.printf(message, args);
-        System.err.println();
+        String formatted = java.text.MessageFormat.format(message, args);
+        System.err.printf("ERROR at line %d: {}\n", ctx.getStart().getLine(), formatted);
+    }
+
+    @Override
+    public Type visitScopeStat(ArchitParser.ScopeStatContext ctx) {
+        pushScope();
+        visitChildren(ctx);
+        popScope();
+        return null;
     }
 
 
     @Override
     public Type visitReturnStat(ArchitParser.ReturnStatContext ctx) {
-        Type t = visit(ctx.expr());
-        return t;
+        Type returnType = visit(ctx.expr());
+        ParserRuleContext parent = ctx.getParent();
+        while (parent != null && !(parent instanceof ArchitParser.FunctionDeclContext)) {
+            parent = parent.getParent();
+        }
+        if (!(parent instanceof ArchitParser.FunctionDeclContext func)) {
+            error(ctx, "Return statement not inside a function");
+            return returnType;
+        }
+        Type declaredReturn = visit(func.type());
+        if (!declaredReturn.equals(returnType)) {
+            error(ctx, "Return type mismatch: expected {}, found {}", declaredReturn, returnType);
+        }
+        return returnType;
     }
+
+
 
     @Override
     public Type visitVarDecl(ArchitParser.VarDeclContext ctx) {
@@ -62,12 +83,12 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 ? visit(ctx.expr())
                 : visit(ctx.functionCallNoBrackets());
         if (!init.equals(declared)) {
-            error(ctx, "Cannot assign %s to variable '%s' of type %s", init, name, declared);
+            error(ctx, "Cannot assign {} to variable '{}' of type {}", init, name, declared);
         }
         int id = nextVarId++;
         boolean ok = currentScope.defineVariable(name, declared, id, ctx);
         if (!ok) {
-            error(ctx.symbol(), "Variable '%s' already defined in this scope", name);
+            error(ctx.symbol(), "Variable '{}' already defined in this scope", name);
         }
         tables.addSymbolMapping(ctx.symbol(), id);
         return null;
@@ -83,7 +104,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         try {
             var = currentScope.resolveVariable(name);
         } catch (RuntimeException e) {
-            error(ctx.symbol(), "Variable '%s' not defined", name);
+            error(ctx.symbol(), "Variable '{}' not defined", name);
             return null; // unreachable
         }
         Type lhs = var.type();
@@ -91,7 +112,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 ? visit(ctx.expr())
                 : visit(ctx.functionCallNoBrackets());
         if (!rhs.equals(lhs)) {
-            error(ctx, "Cannot assign %s to '%s' of type %s", rhs, name, lhs);
+            error(ctx, "Cannot assign {} to '{}' of type {}", rhs, name, lhs);
         }
         tables.addSymbolMapping(ctx.symbol(), var.id());
         return null;
@@ -105,7 +126,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             var = currentScope.resolveVariable(name);
         } catch (RuntimeException e) {
             throw new ScriptException(run, ScriptException.Type.NAME_ERROR,
-                    ctx, "Variable '%s' not defined", name);
+                    ctx, "Variable '{}' not defined", name);
         }
         tables.addSymbolMapping(ctx, var.id());
         return var.type();
@@ -118,7 +139,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 ? visit(ctx.expr())
                 : visit(ctx.functionCallNoBrackets());
         if (!cond.equals(Type.logic)) {
-            error(ctx, "Condition in 'if' must be logic, found %s", cond);
+            error(ctx, "Condition in 'if' must be logic, found {}", cond);
         }
         visit(ctx.scopeStat());
         if (ctx.elseStat() != null) {
@@ -139,7 +160,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 ? visit(ctx.expr())
                 : visit(ctx.functionCallNoBrackets());
         if (!cond.equals(Type.logic)) {
-            error(ctx, "Condition in 'while' must be logic, found %s", cond);
+            error(ctx, "Condition in 'while' must be logic, found {}", cond);
         }
         visit(ctx.scopeStat());
         return null;
@@ -151,7 +172,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 ? visit(ctx.expr())
                 : visit(ctx.functionCallNoBrackets());
         if (!times.equals(Type.number) && !times.equals(Type.real)) {
-            error(ctx, "Repeat count must be number or real, found %s", times);
+            error(ctx, "Repeat count must be number or real, found {}", times);
         }
         visit(ctx.scopeStat());
         return null;
@@ -169,7 +190,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
 
         boolean ok = currentScope.defineFunction(name, retType, paramTypes, paramNames, ctx);
         if (!ok) {
-            throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "Function '%s' already defined", name);
+            throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "Function '{}' already defined", name);
         }
 
         pushScope();
@@ -198,7 +219,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         Type[] at = args.toArray(new Type[0]);
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
-            throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "Function '%s(%s)' not found",
+            throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "Function '{}({})' not found",
                     name, args);
         }
         tables.addFunctionMapping(ctx, fn);
@@ -212,7 +233,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         Type[] at = args.toArray(new Type[0]);
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
-            throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "Function '%s(%s)' not found",
+            throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "Function '{}({})' not found",
                     name, args);
         }
         tables.addFunctionMapping(ctx, fn);
@@ -304,18 +325,15 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                     if (left.equals(Type.number) && right.equals(Type.number)) {
                         tables.addOperatorMapping(ctx, Operators.MODULO);
                         return Type.number;
-                    } else if (left.equals(Type.real) && right.equals(Type.real)) {
-                        tables.addOperatorMapping(ctx, Operators.MODULO);
-                        return Type.real;
                     }
                     break;
 
                 case "^":
                     if (left.equals(Type.number) && right.equals(Type.number)) {
-                        tables.addOperatorMapping(ctx, Operators.POWER);
+                        tables.addOperatorMapping(ctx, Operators.POWER_NUMBERS);
                         return Type.number;
                     } else if (left.equals(Type.real) && right.equals(Type.real)) {
-                        tables.addOperatorMapping(ctx, Operators.POWER);
+                        tables.addOperatorMapping(ctx, Operators.POWER_REALS);
                         return Type.real;
                     }
                     break;
@@ -378,7 +396,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                     break;
             }
 
-            error(ctx, "Operator '%s' cannot be applied to types %s and %s", o, left, right);
+            error(ctx, "Operator '{}' cannot be applied to types {} and {}", o, left, right);
         }
 
 
@@ -393,8 +411,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     public Type visitListExpr(ArchitParser.ListExprContext ctx) {
         List<Type> elems = ctx.expr().stream().map(this::visit).collect(Collectors.toList());
         if (ctx.getText().startsWith("#")) {
-            Type t = visit(ctx.materialExpr());
-            return Type.list(t);
+            return Type.list(Type.material);
         } else {
             if (elems.isEmpty()) {
                 error(ctx, "Cannot infer element type of empty list");
@@ -402,7 +419,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             Type head = elems.get(0);
             for (Type t : elems) {
                 if (!t.equals(head)) {
-                    error(ctx, "List elements must all have same type, found %s and %s", head, t);
+                    error(ctx, "List elements must all have same type, found {} and {}", head, t);
                 }
             }
             return Type.list(head);
@@ -417,7 +434,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         for (int i = 2; i < pairs.size(); i += 2) {
             Type k = visit(pairs.get(i)), v = visit(pairs.get(i+1));
             if (!k.equals(key0) || !v.equals(val0)) {
-                error(ctx, "Mapfuck it");
+                error(ctx, "Inconsistent map element types: expected ({}, {}), found ({}, {})", key0, val0, k, v);
             }
         }
         return Type.map(key0, val0);

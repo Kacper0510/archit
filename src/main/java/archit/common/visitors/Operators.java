@@ -6,7 +6,7 @@ public enum Operators {
     SUBTRACT_NUMBERS, SUBTRACT_REALS,
     MULTIPLY_NUMBERS, MULTIPLY_REALS,
     DIVIDE_NUMBERS, DIVIDE_REALS,
-    MODULO, POWER,
+    MODULO, POWER_NUMBERS, POWER_REALS,
 
     // Comparison
     EQUALS, NOT_EQUALS,
@@ -17,7 +17,7 @@ public enum Operators {
     AND, OR, NOT,
 
     // Indexing / Access
-    LIST_INDEX, MAP_GET, LENGTH,
+    LIST_INDEX, MAP_GET,
 
     // Unary minus
     NEGATE_NUMBER, NEGATE_REAL,
