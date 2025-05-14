@@ -33,4 +33,13 @@ public class BasicNatives {
     public void move(ScriptRun run, List<BigInteger> vector) {
         run.moveCursor(vector.get(0).intValue(), vector.get(1).intValue(), vector.get(2).intValue());
     }
+
+    @ArchitNative("native position(): [number];")
+    public List<BigInteger> position(ScriptRun run) {
+        return List.of(
+            BigInteger.valueOf(run.getCursorX()),
+            BigInteger.valueOf(run.getCursorY()),
+            BigInteger.valueOf(run.getCursorZ())
+        );
+    }
 }
