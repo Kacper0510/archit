@@ -54,7 +54,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
 
     @Override
     public Type visitReturnStat(ArchitParser.ReturnStatContext ctx) {
-        Type returnType = visit(ctx.expr());
+        Type returnType = ctx.expr() == null ? null : visit(ctx.expr());
         ParserRuleContext parent = ctx.getParent();
         while (parent != null && !(parent instanceof ArchitParser.FunctionDeclContext)) {
             parent = parent.getParent();
