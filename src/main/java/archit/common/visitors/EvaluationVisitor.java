@@ -15,6 +15,8 @@ public class EvaluationVisitor {
     private final ScriptRun run;
     private final InfoTables tables;
 
+    public static final int MAX_RECURSION_DEPTH = 100;
+
     //stosy
     private final List<Map<Integer, Object>> variables = new ArrayList<>();
     public final List<Runnable> calls = new ArrayList<>();
@@ -285,6 +287,15 @@ public class EvaluationVisitor {
 
     public void visitFunctionDecl(ArchitParser.FunctionDeclContext ctx, Object[] args) {
         variables.add(new HashMap<>());  // push new variable scope
+        if (variables.size() > MAX_RECURSION_DEPTH) {
+            throw new ScriptException(
+                run,
+                ScriptException.Type.RUNTIME_ERROR,
+                ctx,
+                "Max recursion depth of {} exceeded",
+                MAX_RECURSION_DEPTH
+            );
+        }
         for (int i = 0; i < args.length; i++) {
             var paramCtx = ctx.functionParams().functionParam(i).symbol();
             var paramId = tables.getSymbols().get(paramCtx);
