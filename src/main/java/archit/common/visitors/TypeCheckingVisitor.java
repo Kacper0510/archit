@@ -2,16 +2,13 @@
 package archit.common.visitors;
 
 import archit.common.*;
-import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
+import archit.parser.ArchitParserBaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
+public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     private final ScriptRun run;
     private final InfoTables tables = new InfoTables();
     private Scope currentScope;
@@ -124,24 +121,9 @@ public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
             error(ctx, "Condition in 'if' must be logic, found %s", cond);
         }
         visit(ctx.scopeStat());
-        for (ArchitParser.ElseIfStatContext eif : ctx.elseIfStat()) {
-            visitElseIfStat(eif);
-        }
         if (ctx.elseStat() != null) {
             visitElseStat(ctx.elseStat());
         }
-        return null;
-    }
-
-    @Override
-    public Type visitElseIfStat(ArchitParser.ElseIfStatContext ctx) {
-        Type cond = ctx.expr() != null
-                ? visit(ctx.expr())
-                : visit(ctx.functionCallNoBrackets());
-        if (!cond.equals(Type.logic)) {
-            error(ctx, "Condition in 'else if' must be logic, found %s", cond);
-        }
-        visit(ctx.scopeStat());
         return null;
     }
 
@@ -412,7 +394,6 @@ public class TypeCheckingVisitor extends ArchitBaseVisitor<Type> {
         List<Type> elems = ctx.expr().stream().map(this::visit).collect(Collectors.toList());
         if (ctx.getText().startsWith("#")) {
             Type t = visit(ctx.materialExpr());
-            tables.addOperatorMapping(ctx, Operators.LIST_INDEX);
             return Type.list(t);
         } else {
             if (elems.isEmpty()) {

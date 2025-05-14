@@ -30,6 +30,7 @@ public class StandardLibrary implements Scope {
     private static final Object[] COMMON_NATIVES = {
         new MathNatives(),
         new BasicNatives(),
+        new Casts(),
     };
 
     private final Map<String, Set<ArchitFunction>> registeredFunctions = new HashMap<>();
