@@ -1,6 +1,7 @@
 package archit.common.visitors;
 
 import archit.common.Material;
+import archit.common.ScriptException;
 import archit.common.ScriptRun;
 import archit.common.ArchitFunction;
 import archit.parser.ArchitParser;
@@ -15,13 +16,30 @@ public class EvaluationVisitor {
     private final InfoTables tables;
 
     //stosy
-    private final Map<Integer, Object> variables = new HashMap<>();
+    private final List<Map<Integer, Object>> variables = new ArrayList<>();
     private final List<Runnable> calls = new ArrayList<>();
     private final List<Object> objects = new ArrayList<>();
 
     public EvaluationVisitor(ScriptRun run, InfoTables tables) {
         this.run = run;
         this.tables = tables;
+        this.variables.add(new HashMap<>());
+    }
+
+    private void putVariable(int id, Object value) {
+        for (int i = variables.size() - 1; i >= 0; i--) {
+            var map = variables.get(i);
+            if (map.containsKey(id)) {
+                map.put(id, value);
+                return;
+            }
+        }
+        throw new ScriptException(
+            run,
+            ScriptException.Type.RUNTIME_ERROR,
+            0, 0,
+            "Variable assignment before initialization (this should never happen): {} at {}", value, id
+        );
     }
 
     public void visitAssignStat(ArchitParser.AssignStatContext ctx) {
@@ -38,21 +56,17 @@ public class EvaluationVisitor {
             Object result;
 
             switch (op){
-                case "=" -> {
-                    variables.put(id, exprValue);
-                }
-
+                case "=" -> putVariable(id, exprValue);
                 case "+=" -> {
                     if (value instanceof BigInteger && exprValue instanceof BigInteger) {
                         result = ((BigInteger) value).add((BigInteger) exprValue);
                     }
                     // w innym przypadku musi to być Double
                     else {
-                        assert value instanceof Double;
                         result = ((Double) value) + ((Double) exprValue);
                     }
 
-                    variables.put(id, result);
+                    putVariable(id, result);
                 }
             }
 
@@ -107,6 +121,23 @@ public class EvaluationVisitor {
         if (ctx.interpolation() != null) {
             calls.add(() -> visitInterpolation(ctx.interpolation()));
             return;
+        }
+
+        if (ctx.symbol() != null) {
+            var id = tables.getSymbols().get(ctx.symbol());
+            for (int i = variables.size() - 1; i >= 0; i--) {
+                var map = variables.get(i);
+                if (map.containsKey(id)) {
+                    objects.add(map.get(id));
+                    return;
+                }
+            }
+            throw new ScriptException(
+                run,
+                ScriptException.Type.RUNTIME_ERROR,
+                0, 0,
+                "Variable not found for id {} (this should never happen)", id
+            );
         }
 
         //operator
@@ -192,9 +223,11 @@ public class EvaluationVisitor {
         }
     }
 
-    private static class ReturnPointer implements Runnable {
+    private class ReturnPointer implements Runnable {
         @Override
-        public void run() {}
+        public void run() {
+            variables.removeLast();  // drop current variable scope
+        }
     }
 
     public void visitReturnStat(ArchitParser.ReturnStatContext ctx) {
@@ -203,6 +236,7 @@ public class EvaluationVisitor {
             while (!(last instanceof ReturnPointer)) {
                 last = calls.removeLast();
             }
+            last.run();
         });
         if (ctx.expr() != null) {
             calls.add(() -> visitExpr(ctx.expr()));
@@ -250,10 +284,11 @@ public class EvaluationVisitor {
     }
 
     public void visitFunctionDecl(ArchitParser.FunctionDeclContext ctx, Object[] args) {
+        variables.add(new HashMap<>());  // push new variable scope
         for (int i = 0; i < args.length; i++) {
             var paramCtx = ctx.functionParams().functionParam(i).symbol();
             var paramId = tables.getSymbols().get(paramCtx);
-            variables.put(paramId, args[i]);
+            variables.getLast().put(paramId, args[i]);
         }
         calls.add(() -> visitScopeStat(ctx.scopeStat()));
     }
@@ -428,7 +463,7 @@ public class EvaluationVisitor {
         //po obliczeniu wartości zmiennej zapisuje ją
         calls.add(() -> {
             Object value = objects.removeLast();
-            variables.put(id, value);
+            variables.getLast().put(id, value);
         });
 
         //pierw ma obliczyć wartość zmiennej
