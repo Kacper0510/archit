@@ -411,8 +411,11 @@ public class EvaluationVisitor {
     }
 
     public void visitScopeStat(ArchitParser.ScopeStatContext ctx) {
-        // TODO (emil)
-        return;
+        var stmts = ctx.statement();
+        for (int i = stmts.size() - 1; i >= 0; i--) {
+            var s = stmts.get(i);
+            calls.add(() -> visitStatement(s));
+        }
     }
 
     public void visitVarDecl(ArchitParser.VarDeclContext ctx) {
@@ -435,8 +438,6 @@ public class EvaluationVisitor {
     }
 
     public void visitWhileStat(ArchitParser.WhileStatContext ctx) {
-        // TODO (emil)
-
         calls.add(() -> {
             Boolean cond = (Boolean) objects.removeLast();
             if (cond) {
