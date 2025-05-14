@@ -455,6 +455,10 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         // without brackets
         if (ctx.symbol() != null) return visit(ctx.symbol());
         if (ctx.functionCall() != null) return visit(ctx.functionCall());
+        if (ctx.interpolation() != null) {
+            visit(ctx.interpolation());
+            return Type.string;
+        }
 
         throw new UnsupportedOperationException("Unhandled expr case: " + ctx.getText());
     }

@@ -526,6 +526,7 @@ public class EvaluationVisitor {
                     sb.append(exprs.removeLast());
                 }
             }
+            objects.add(sb.toString());
         });
         for (int i = ctx.expr().size() - 1; i >= 0; i--) {
             var expr = ctx.expr(i);
