@@ -294,7 +294,6 @@ public class EvaluationVisitor {
     }
 
     public void visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {
-        // TODO (emil)
         String namespace;
         String id;
 
@@ -313,14 +312,12 @@ public class EvaluationVisitor {
     }
 
     public void visitProgram(ArchitParser.ProgramContext ctx) {
-        // TODO (emil)
         var stmts = ctx.statement();
         for (int i = stmts.size() - 1; i >= 0; i--) {
             var s = stmts.get(i);
             Runnable r = () -> visitStatement(s);
             calls.add(r);
         }
-        return;
     }
 
     public void visitStatement(ArchitParser.StatementContext ctx) {
@@ -382,12 +379,10 @@ public class EvaluationVisitor {
 
         if(ctx.scopeStat() != null) {
             calls.add(() -> visitScopeStat(ctx.scopeStat()));
-            return;
         }
     }
 
     public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
-        // TODO (emil)
 
         calls.add(() -> {
             long howMany = (long) objects.removeLast();
@@ -408,8 +403,6 @@ public class EvaluationVisitor {
                 visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
             }
         });
-
-        return;
     }
 
     public void visitReturnStat(ArchitParser.ReturnStatContext ctx) {
@@ -423,7 +416,6 @@ public class EvaluationVisitor {
     }
 
     public void visitVarDecl(ArchitParser.VarDeclContext ctx) {
-        // TODO (emil)
         var id = tables.getSymbols().get(ctx.symbol());
 
         //po obliczeniu wartości zmiennej zapisuje ją
@@ -440,12 +432,28 @@ public class EvaluationVisitor {
         else {
             calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
         }
-        return;
     }
 
     public void visitWhileStat(ArchitParser.WhileStatContext ctx) {
         // TODO (emil)
-        return;
+
+        calls.add(() -> {
+            Boolean cond = (Boolean) objects.removeLast();
+            if (cond) {
+                calls.add(() -> visitWhileStat(ctx));
+                calls.add(() -> visitScopeStat(ctx.scopeStat()));
+            }
+        });
+
+        //obliczenie warunku
+        calls.add(() -> {
+            if (ctx.expr() != null){
+                visitExpr(ctx.expr());
+            }
+            else{
+                visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
+            }
+        });
     }
 
     /*
