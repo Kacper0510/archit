@@ -243,50 +243,29 @@ public class EvaluationVisitor {
     }
 
     public void visitIfStat(ArchitParser.IfStatContext ctx) {
-        // TODO (emil)
-        //po obliczonym warunku wykona się to
         calls.add(() -> {
-            //ściągnięcie wyniku ze stosu
             Boolean cond = (Boolean) objects.removeLast();
-
-            //jesli if spelniony to wykonaj to co jest w scope i zakoncz
             if (cond) {
+                //jesli true, wykonaj scope if'a i koniec
                 calls.add(() -> visitScopeStat(ctx.scopeStat()));
-                return;
-            }
-        });
-
-        //pierw obliczy się warunek
-        calls.add(() -> {
-            //obliczenie warunku
-            if (ctx.expr() != null) {
-                calls.add(() -> visitExpr(ctx.expr()));
-            }
-            else {
-                calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
-            }
-
-
-
-
-            for (var elseif : ctx.elseIfStat()) {
-                if (elseif.expr() != null) {
-                    visitExpr(elseif.expr());
+            } else if (ctx.elseStat() != null) {
+                var elseCtx = ctx.elseStat();
+                if (elseCtx.scopeStat() != null) {
+                    //normalny else
+                    calls.add(() -> visitScopeStat(elseCtx.scopeStat()));
                 } else {
-                    visitFunctionCallNoBrackets(elseif.functionCallNoBrackets());
+                    //zagnieżdżony if
+                    calls.add(() -> visitIfStat(elseCtx.ifStat()));
                 }
-                Boolean cond2 = (Boolean) objects.removeLast();
-                if (cond2) {
-                    visitScopeStat(elseif.scopeStat());
-                    return;
-                }
-            }
-
-            if (ctx.elseStat() != null) {
-                visitScopeStat(ctx.elseStat().scopeStat());
             }
         });
-        return;
+
+        //obliczenie warunku głównego if'a
+        if (ctx.expr() != null) {
+            calls.add(() -> visitExpr(ctx.expr()));
+        } else {
+            calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
+        }
     }
 
     public void visitListExpr(ArchitParser.ListExprContext ctx) {
