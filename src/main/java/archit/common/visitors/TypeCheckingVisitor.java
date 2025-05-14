@@ -227,6 +227,10 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         String[] paramNames = params.stream().map(p -> p.symbol().getText()).toArray(String[] ::new);
         Type retType = ctx.type() != null ? visit(ctx.type()) : null;
 
+        if (retType != null && ctx.scopeStat().statement().getLast().repeatStat() == null) {
+            error(ctx, "No return statement at the end of '{}', which must return something", name);
+        } 
+
         boolean ok = currentScope.defineFunction(name, retType, paramTypes, paramNames, ctx);
         if (!ok) {
             throw new ScriptException(run, ScriptException.Type.NAME_ERROR, ctx, "Function '{}' already defined", name);
