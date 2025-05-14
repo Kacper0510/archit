@@ -99,66 +99,65 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         Type lhs = varRes.type();
         Type rhs = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
         tables.addSymbolMapping(ctx.symbol(), varRes.id());
-            String op = ctx.op.getText();
-            switch (op) {
-                case "=" -> {
-                    if (lhs.equals(rhs)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN);
-                        return null;
-                    }
-                }
-                case "+=" -> {
-                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_ADD_NUMBERS);
-                        return null;
-                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_ADD_REALS);
-                        return null;
-                    }
-                }
-                case "-=" -> {
-                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_SUBTRACT_NUMBERS);
-                        return null;
-                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_SUBTRACT_REALS);
-                        return null;
-                    }
-                }
-                case "*=" -> {
-                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_MULTIPLY_NUMBERS);
-                        return null;
-                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_MULTIPLY_REALS);
-                        return null;
-                    }
-                }
-                case "/=" -> {
-                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_DIVIDE_NUMBERS);
-                        return null;
-                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_DIVIDE_REALS);
-                        return null;
-                    }
-                }
-                case "%=" -> {
-                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_MODULO);
-                        return null;
-                    }
-                }
-                case "^=" -> {
-                    if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_POWER_NUMBERS);
-                        return null;
-                    } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
-                        tables.addOperatorMapping(ctx, Operators.ASSIGN_POWER_REALS);
-                        return null;
-                    }
+        String op = ctx.op.getText();
+        switch (op) {
+            case "=" -> {
+                if (lhs.equals(rhs)) {
+                    return null;
                 }
             }
+            case "+=" -> {
+                if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                    tables.addOperatorMapping(ctx, Operators.ADD_NUMBERS);
+                    return null;
+                } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                    tables.addOperatorMapping(ctx, Operators.ADD_REALS);
+                    return null;
+                }
+            }
+            case "-=" -> {
+                if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                    tables.addOperatorMapping(ctx, Operators.SUBTRACT_NUMBERS);
+                    return null;
+                } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                    tables.addOperatorMapping(ctx, Operators.SUBTRACT_REALS);
+                    return null;
+                }
+            }
+            case "*=" -> {
+                if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                    tables.addOperatorMapping(ctx, Operators.MULTIPLY_NUMBERS);
+                    return null;
+                } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                    tables.addOperatorMapping(ctx, Operators.MULTIPLY_REALS);
+                    return null;
+                }
+            }
+            case "/=" -> {
+                if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                    tables.addOperatorMapping(ctx, Operators.DIVIDE_NUMBERS);
+                    return null;
+                } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                    tables.addOperatorMapping(ctx, Operators.DIVIDE_REALS);
+                    return null;
+                }
+            }
+            case "%=" -> {
+                if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                    tables.addOperatorMapping(ctx, Operators.MODULO);
+                    return null;
+                }
+            }
+            case "^=" -> {
+                if (lhs.equals(Type.number) && rhs.equals(Type.number)) {
+                    tables.addOperatorMapping(ctx, Operators.POWER_NUMBERS);
+                    return null;
+                } else if (lhs.equals(Type.real) && rhs.equals(Type.real)) {
+                    tables.addOperatorMapping(ctx, Operators.POWER_REALS);
+                    return null;
+                }
+            }
+        }
         error(ctx, "Cannot use operator {} with type {} to '{}' of type {}", op, rhs, name, lhs);
         return null;
     }
@@ -467,7 +466,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             return Type.list(Type.material);
         } else {
             if (elems.isEmpty()) {
-                error(ctx, "Cannot infer element type of empty list"); // TODO: allow empty list
+                error(ctx, "Cannot infer element type of empty list");  // TODO: allow empty list
             }
             Type head = elems.get(0);
             for (Type t : elems) {
