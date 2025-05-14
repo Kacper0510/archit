@@ -1,15 +1,24 @@
 package archit.common.visitors;
 
 public enum Operators {
-    ADD_REALS,
-    ADD_NUMBERS,
+    // Arithmetic
+    ADD_NUMBERS, ADD_REALS,
+    SUBTRACT_NUMBERS, SUBTRACT_REALS,
+    MULTIPLY_NUMBERS, MULTIPLY_REALS,
+    DIVIDE_NUMBERS, DIVIDE_REALS,
+    MODULO, POWER,
 
-    SUBTRACT_REALS,
-    SUBTRACT_NUMBERS,
+    // Comparison
+    EQUALS, NOT_EQUALS,
+    GREATER, GREATER_EQUALS,
+    LESS, LESS_EQUALS,
 
-    AND,
-    OR,
-    NOT;
+    // Logical
+    AND, OR, NOT,
 
-    // TODO (dawid) dodaj wszelkie możliwe operatory, na które zezwala nasz język
+    // Indexing / Access
+    LIST_INDEX, MAP_GET, LENGTH,
+
+    // Unary minus
+    NEGATE_NUMBER, NEGATE_REAL,
 }
