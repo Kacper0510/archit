@@ -1,6 +1,7 @@
 package archit.common.visitors;
 
 import archit.common.ScriptRun;
+import archit.common.ArchitFunction;
 import archit.parser.ArchitBaseVisitor;
 import archit.parser.ArchitParser;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 public class EvaluationVisitor {
     private final ScriptRun run;
@@ -79,16 +81,6 @@ public class EvaluationVisitor {
     }
 
     public void visitContinueStat(ArchitParser.ContinueStatContext ctx) {
-        // TODO (emil)
-        return;
-    }
-
-    public void visitElseIfStat(ArchitParser.ElseIfStatContext ctx) {
-        // TODO (emil)
-        return;
-    }
-
-    public void visitElseStat(ArchitParser.ElseStatContext ctx) {
         // TODO (emil)
         return;
     }
@@ -207,7 +199,39 @@ public class EvaluationVisitor {
 
 
     public void visitFunctionCall(ArchitParser.FunctionCallContext ctx) {
-        // TODO (emil)
+        ArchitFunction function = tables.getFunctions().get(ctx);
+
+        //po obliczonych argumentach funkcji, wywołujemy ją
+        calls.add(() -> {
+            List<Object> args = new ArrayList<>();
+            for (int i = 0; i < ctx.expr().size(); i++) {
+                args.add(0, objects.removeLast());
+            }
+
+            Object result;
+
+            if (function.isNative()) {
+                @SuppressWarnings("unchecked")  //ja sobie stłumiłem automatycznie ten warning ale to chyba powinno być aby ogólnie go nie było
+                //kolejno: scriptRun, lista argumentów, typ zwracany
+                BiFunction<ScriptRun, List<Object>, Object> impl =
+                        (BiFunction<ScriptRun, List<Object>, Object>) function.callInfo();
+                result = impl.apply(run, args);
+            }
+
+            //jesli jest skryptowa
+            else{
+                // TODO (emil)
+            }
+
+        });
+
+        //pierw obliczamy wszystkie argumenty funkcji
+        var exprs = ctx.expr();
+        for (int i = exprs.size() - 1; i >= 0; i--) {
+            ArchitParser.ExprContext arg = exprs.get(i);
+            calls.add(() -> visitExpr(arg));
+        }
+
         return;
     }
 
@@ -223,6 +247,40 @@ public class EvaluationVisitor {
 
     public void visitIfStat(ArchitParser.IfStatContext ctx) {
         // TODO (emil)
+        calls.add(() -> {
+            //obliczenie warunku
+            if (ctx.expr() != null) {
+                visitExpr(ctx.expr());
+            } else {
+                visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
+            }
+
+            //ściągnięcie wyniku ze stosu
+            Boolean cond = (Boolean) objects.removeLast();
+
+            //jesli if spelniony to wykonaj to co jest w scope i zakoncz
+            if (cond) {
+                visitScopeStat(ctx.scopeStat());
+                return;
+            }
+
+            for (var elseif : ctx.elseIfStat()) {
+                if (elseif.expr() != null) {
+                    visitExpr(elseif.expr());
+                } else {
+                    visitFunctionCallNoBrackets(elseif.functionCallNoBrackets());
+                }
+                Boolean cond2 = (Boolean) objects.removeLast();
+                if (cond2) {
+                    visitScopeStat(elseif.scopeStat());
+                    return;
+                }
+            }
+
+            if (ctx.elseStat() != null) {
+                visitScopeStat(ctx.elseStat().scopeStat());
+            }
+        });
         return;
     }
 
