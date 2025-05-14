@@ -205,7 +205,7 @@ public class EvaluationVisitor {
         int n = exprs.size();
         calls.add(() -> {
             Object[] args = new Object[n];
-            for (int i = 0; i < n; i++) {
+            for (int i = n - 1; i >= 0; i--) {
                 args[i] = objects.removeLast();
             }
 
