@@ -5,6 +5,8 @@ import archit.parser.ArchitParser;
 import archit.parser.ArchitParserBaseVisitor;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
@@ -63,8 +65,8 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             error(ctx, "Return statement not inside a function");
             return returnType;
         }
-        Type declaredReturn = visit(func.type());
-        if (!declaredReturn.equals(returnType)) {
+        Type declaredReturn = func.type() == null ? null : visit(func.type());
+        if (!Objects.equals(declaredReturn, returnType)) {
             error(ctx, "Return type mismatch: expected {}, found {}", declaredReturn, returnType);
         }
         return returnType;
@@ -76,7 +78,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         Type declared = visit(ctx.type());
         // check initializer
         Type init = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
-        if (!init.equals(declared)) {
+        if (!Objects.equals(init, declared)) {
             error(ctx, "Cannot assign {} to variable '{}' of type {}", init, name, declared);
         }
         int id = nextVarId++;
