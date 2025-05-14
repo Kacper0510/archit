@@ -15,9 +15,9 @@ public class EvaluationVisitor {
     private final InfoTables tables;
 
     //stosy
-    public final Map<Integer, Object> variables = new HashMap<>();
-    public final List<Runnable> calls = new ArrayList<>();
-    public final List<Object> objects = new ArrayList<>();
+    private final Map<Integer, Object> variables = new HashMap<>();
+    private final List<Runnable> calls = new ArrayList<>();
+    private final List<Object> objects = new ArrayList<>();
 
     public EvaluationVisitor(ScriptRun run, InfoTables tables) {
         this.run = run;
@@ -66,23 +66,14 @@ public class EvaluationVisitor {
         else {
             calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
         }
-
-        return;
     }
 
     public void visitBreakStat(ArchitParser.BreakStatContext ctx) {
         // TODO (emil)
-        return;
     }
 
     public void visitContinueStat(ArchitParser.ContinueStatContext ctx) {
         // TODO (emil)
-        return;
-    }
-
-    public void visitEnumExpr(ArchitParser.EnumExprContext ctx) {
-        // TODO (emil)
-        return;
     }
 
     public void visitExpr(ArchitParser.ExprContext ctx) {
@@ -103,8 +94,18 @@ public class EvaluationVisitor {
         }
 
         if (ctx.STRING() != null) {
-            String fullText = ctx.STRING().getText();
+            String fullText = ctx.STRING().getText().replace("\\\\", "\\").replace("\\'", "'");
             objects.add(fullText.substring(1, fullText.length() - 1));  //usuwanie cudzysłowów
+            return;
+        }
+
+        if (ctx.enumExpr() != null) {
+            objects.add(ctx.enumExpr().ID().getText());
+            return;
+        }
+
+        if (ctx.interpolation() != null) {
+            calls.add(() -> visitInterpolation(ctx.interpolation()));
             return;
         }
 
@@ -188,57 +189,73 @@ public class EvaluationVisitor {
 
             calls.add(() -> visitExpr(right));
             calls.add(() -> visitExpr(left));
-            return;
+        }
+    }
+
+    private static class ReturnPointer implements Runnable {
+        @Override
+        public void run() {}
+    }
+
+    public void visitReturnStat(ArchitParser.ReturnStatContext ctx) {
+        calls.add(() -> {
+            Runnable last = null;
+            while (!(last instanceof ReturnPointer)) {
+                last = calls.removeLast();
+            }
+        });
+        if (ctx.expr() != null) {
+            calls.add(() -> visitExpr(ctx.expr()));
+        } else if (ctx.functionCallNoBrackets() != null) {
+            calls.add(() -> visitFunctionCallNoBrackets(ctx.functionCallNoBrackets()));
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void visitFunctionCall(ArchitParser.FunctionCallContext ctx) {
-        ArchitFunction function = tables.getFunctions().get(ctx);
-
-        //po obliczonych argumentach funkcji, wywołujemy ją
+    public void visitFunctionCall(ArchitFunction function, List<ArchitParser.ExprContext> exprs) {
+        // po obliczonych argumentach funkcji, wywołujemy ją
+        int n = exprs.size();
         calls.add(() -> {
-            int n = ctx.expr().size();
             Object[] args = new Object[n];
             for (int i = 0; i < n; i++) {
                 args[i] = objects.removeLast();
             }
 
-            Object result;
-
             if (function.isNative()) {
-                //kolejno: scriptRun, lista argumentów, typ zwracany
-                BiFunction<ScriptRun, Object[], Object> impl =
-                        (BiFunction<ScriptRun, Object[], Object>) function.callInfo();
-                result = impl.apply(run, args);
+                // kolejno: scriptRun, lista argumentów, typ zwracany
+                var impl = (BiFunction<ScriptRun, Object[], Object>) function.callInfo();
+                objects.add(impl.apply(run, args));
+            } else {  // jesli jest skryptowa
+                var decl = (ArchitParser.FunctionDeclContext) function.callInfo();
+                calls.add(new ReturnPointer());
+                calls.add(() -> visitFunctionDecl(decl, args));
             }
-
-            //jesli jest skryptowa
-            else{
-                // TODO (emil)
-            }
-
-            //objects.add(result);
         });
 
-        //pierw obliczamy wszystkie argumenty funkcji
-        var exprs = ctx.expr();
+        // pierw obliczamy wszystkie argumenty funkcji
         for (int i = exprs.size() - 1; i >= 0; i--) {
             ArchitParser.ExprContext arg = exprs.get(i);
             calls.add(() -> visitExpr(arg));
         }
+    }
 
-        return;
+    public void visitFunctionCall(ArchitParser.FunctionCallContext ctx) {
+        ArchitFunction function = tables.getFunctions().get(ctx);
+        visitFunctionCall(function, ctx.expr());
     }
 
     public void visitFunctionCallNoBrackets(ArchitParser.FunctionCallNoBracketsContext ctx) {
-        // TODO (emil)
-        return;
+        ArchitFunction function = tables.getFunctions().get(ctx);
+        visitFunctionCall(function, ctx.expr());
     }
 
-    public void visitFunctionDecl(ArchitParser.FunctionDeclContext ctx) {
-        // TODO (emil)
-        return;
+    public void visitFunctionDecl(ArchitParser.FunctionDeclContext ctx, Object[] args) {
+        for (int i = 0; i < args.length; i++) {
+            var paramCtx = ctx.functionParams().functionParam(i).symbol();
+            var paramId = tables.getSymbols().get(paramCtx);
+            variables.put(paramId, args[i]);
+        }
+        calls.add(() -> visitScopeStat(ctx.scopeStat()));
     }
 
     public void visitIfStat(ArchitParser.IfStatContext ctx) {
@@ -290,7 +307,6 @@ public class EvaluationVisitor {
 
     public void visitMapExpr(ArchitParser.MapExprContext ctx) {
         // TODO (emil)
-        return;
     }
 
     public void visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {
@@ -315,18 +331,11 @@ public class EvaluationVisitor {
         var stmts = ctx.statement();
         for (int i = stmts.size() - 1; i >= 0; i--) {
             var s = stmts.get(i);
-            Runnable r = () -> visitStatement(s);
-            calls.add(r);
+            calls.add(() -> visitStatement(s));
         }
     }
 
     public void visitStatement(ArchitParser.StatementContext ctx) {
-
-        if(ctx.functionDecl() != null) {
-            calls.add(() -> visitFunctionDecl(ctx.functionDecl()));
-            return;
-        }
-
         if(ctx.functionCall() != null) {
             calls.add(() -> visitFunctionCall(ctx.functionCall()));
             return;
@@ -405,11 +414,6 @@ public class EvaluationVisitor {
         });
     }
 
-    public void visitReturnStat(ArchitParser.ReturnStatContext ctx) {
-        // TODO (emil)
-        return;
-    }
-
     public void visitScopeStat(ArchitParser.ScopeStatContext ctx) {
         var stmts = ctx.statement();
         for (int i = stmts.size() - 1; i >= 0; i--) {
@@ -446,48 +450,40 @@ public class EvaluationVisitor {
             }
         });
 
-        //obliczenie warunku
+        // obliczenie warunku
         calls.add(() -> {
-            if (ctx.expr() != null){
+            if (ctx.expr() != null) {
                 visitExpr(ctx.expr());
-            }
-            else{
+            } else {
                 visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
             }
         });
     }
 
-    /*
-    // TODO (kacper) fix grammar and this function
-    private String interpolateString(String text, ArchitParser.ExprContext ctx) {
-        if (text.charAt(0) == '"' && text.charAt(text.length() - 1) == '"') {
-            text = text.substring(1, text.length() - 1);
-
-            Pattern pattern = Pattern.compile("\\{([a-zA-Z_][a-zA-Z0-9_]*)}");
-            Matcher matcher = pattern.matcher(text);
-            StringBuffer sb = new StringBuffer();
-
-            while (matcher.find()) {
-                String varName = matcher.group(1);
-                if (!variableTable.isDeclared(varName)) {
-                    throw new ScriptExceptions.VariableException("Unknown variable in interpolation: " + varName);
-                }
-                Value value = variableTable.getValue(varName, line);
-                if (value == null) {
-                    throw new ScriptExceptions.InterpolationException(
-                        "Null value for variable in interpolation: " + varName
-                    );
-                }
-                matcher.appendReplacement(sb, Matcher.quoteReplacement(String.valueOf(value.value)));
+    public void visitInterpolation(ArchitParser.InterpolationContext ctx) {
+        calls.add(() -> {
+            List<Object> exprs = new ArrayList<>();
+            for (int i = 0; i < ctx.expr().size(); i++) {
+                exprs.add(objects.removeLast());
             }
+            Collections.reverse(exprs);
 
-            matcher.appendTail(sb);
-            return sb.toString();
-        } else if (text.charAt(0) == '\'' && text.charAt(text.length() - 1) == '\'') {
-            return text.substring(1, text.length() - 1);
-        } else {
-            throw new ScriptExceptions.SyntaxException("Invalid string format. Use either '...' or \"...\"");
+            StringBuilder sb = new StringBuilder();
+            for (var c : ctx.children) {
+                if (c instanceof TerminalNode t) {
+                    if (t.getSymbol().getType() == ArchitParser.INTER_CONTENT) {
+                        sb.append(t.getText());
+                    } else if (t.getSymbol().getType() == ArchitParser.INTER_ESCAPE) {
+                        sb.append(t.getText().replace("\\\\", "\\").replace("\\'", "'"));
+                    }
+                } else if (c instanceof ArchitParser.ExprContext) {
+                    sb.append(exprs.removeLast());
+                }
+            }
+        });
+        for (int i = ctx.expr().size() - 1; i >= 0; i--) {
+            var expr = ctx.expr(i);
+            calls.add(() -> visitExpr(expr));
         }
     }
-    */
 }

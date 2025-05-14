@@ -21,7 +21,7 @@ statement
     | returnStat
     | scopeStat;
 
-returnStat: RETURN expr SEMICOLON;
+returnStat: RETURN (expr | functionCallNoBrackets)? SEMICOLON;
 scopeStat: CURLY_OPEN statement* CURLY_CLOSE;
 
 // Variables
