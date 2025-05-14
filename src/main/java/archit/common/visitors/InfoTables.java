@@ -1,6 +1,7 @@
 package archit.common.visitors;
 
 import archit.common.ArchitFunction;
+import archit.parser.ArchitParser.AssignStatContext;
 import archit.parser.ArchitParser.ExprContext;
 import archit.parser.ArchitParser.FunctionCallContext;
 import archit.parser.ArchitParser.FunctionCallNoBracketsContext;
@@ -14,7 +15,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 public class InfoTables {
     private final Map<SymbolContext, Integer> symbolsToIds = new HashMap<>();
     private final Map<ParserRuleContext, ArchitFunction> callsToFunctions = new HashMap<>();
-    private final Map<ExprContext, Operators> exprsToOperators = new HashMap<>();
+    private final Map<ParserRuleContext, Operators> exprsToOperators = new HashMap<>();
 
     public Map<SymbolContext, Integer> getSymbols() {
         return Collections.unmodifiableMap(symbolsToIds);
@@ -24,7 +25,7 @@ public class InfoTables {
         return Collections.unmodifiableMap(callsToFunctions);
     }
 
-    public Map<ExprContext, Operators> getOperators() {
+    public Map<ParserRuleContext, Operators> getOperators() {
         return Collections.unmodifiableMap(exprsToOperators);
     }
 
@@ -41,6 +42,10 @@ public class InfoTables {
     }
 
     public void addOperatorMapping(ExprContext expr, Operators operator) {
+        exprsToOperators.put(expr, operator);
+    }
+
+    public void addOperatorMapping(AssignStatContext expr, Operators operator) {
         exprsToOperators.put(expr, operator);
     }
 }
