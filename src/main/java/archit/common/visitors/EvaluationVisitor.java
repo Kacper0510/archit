@@ -44,34 +44,41 @@ public class EvaluationVisitor {
         );
     }
 
+    private Object getVariable(int id) {
+        for (int i = variables.size() - 1; i >= 0; i--) {
+            var map = variables.get(i);
+            if (map.containsKey(id)) {
+                return map.get(id);
+            }
+        }
+        throw new ScriptException(
+            run, ScriptException.Type.RUNTIME_ERROR, 0, 0, "Variable not found for id {} (this should never happen)", id
+        );
+    }
+
     public void visitAssignStat(ArchitParser.AssignStatContext ctx) {
-        // TODO (emil)
         var symbol = ctx.symbol();
         var id = tables.getSymbols().get(symbol);
-        Object value = variables.get(id);
-        var op = ctx.op.getText();  //mapa ExprToOperators dopuszcza tylko expr, wiec w tym przypadku ma być tak?
-
+        Object value = getVariable(id);
+        var op = tables.getOperators().get(ctx);
 
         //po obliczeniu wartości zmiennej zapisuje ją do variables
         calls.add(() -> {
             Object exprValue = objects.removeLast();
-            Object result;
-
-            switch (op){
-                case "=" -> putVariable(id, exprValue);
-                case "+=" -> {
-                    if (value instanceof BigInteger && exprValue instanceof BigInteger) {
-                        result = ((BigInteger) value).add((BigInteger) exprValue);
-                    }
-                    // w innym przypadku musi to być Double
-                    else {
-                        result = ((Double) value) + ((Double) exprValue);
-                    }
-
-                    putVariable(id, result);
-                }
+            if (op == Operators.DIVIDE_NUMBERS && ((BigInteger) exprValue).longValue() == 0) {
+                throw new ScriptException(
+                    run,
+                    ScriptException.Type.RUNTIME_ERROR,
+                    ctx,
+                    "Division by zero"
+                );
             }
 
+            if (op == null) {
+                putVariable(id, exprValue);
+            } else {
+                putVariable(id, op.apply(value, exprValue));
+            }
         });
 
         //obliczanie expr albo functionCallNoBrackets
@@ -85,15 +92,14 @@ public class EvaluationVisitor {
     }
 
     public void visitBreakStat(ArchitParser.BreakStatContext ctx) {
-        // TODO (emil)
+        // TODO
     }
 
     public void visitContinueStat(ArchitParser.ContinueStatContext ctx) {
-        // TODO (emil)
+        // TODO
     }
 
     public void visitExpr(ArchitParser.ExprContext ctx) {
-        // TODO (emil)
         if (ctx.NUMBER() != null) {
             objects.add(new BigInteger(ctx.NUMBER().getText().replace("_", ""))); // "_" czyli wsparcie dla wiekszych liczb
             return;
@@ -127,97 +133,38 @@ public class EvaluationVisitor {
 
         if (ctx.symbol() != null) {
             var id = tables.getSymbols().get(ctx.symbol());
-            for (int i = variables.size() - 1; i >= 0; i--) {
-                var map = variables.get(i);
-                if (map.containsKey(id)) {
-                    objects.add(map.get(id));
-                    return;
-                }
-            }
-            throw new ScriptException(
-                run,
-                ScriptException.Type.RUNTIME_ERROR,
-                0, 0,
-                "Variable not found for id {} (this should never happen)", id
-            );
+            objects.add(getVariable(id));
+            return;
         }
 
         //operator
         Operators op = tables.getOperators().get(ctx);
 
         //Unarne
-        // 1) not
-        if (ctx.expr().size() == 1 && op == Operators.NOT) {
+        if (ctx.expr().size() == 1) {
             // nadpisanie ostatniego elementu stosu objects jego negacją
             calls.add(() -> {
-                Boolean v = (Boolean) objects.removeLast();
-                objects.add(!v);
+                Object a = objects.removeLast();
+                objects.add(op.apply(a, null));
             });
             // rekurencja w celu pełnego obliczenia podwyrażeń expr
-            calls.add(() -> visitExpr(ctx.expr(0)));
-            return;
-        }
-        // 2) minus
-        if (ctx.expr().size() == 1 && ctx.op.getText().equals("-")) {   //do zamiany na if (ctx.expr().size() == 1 && op == Operators.UNARY_MINUS)
-            calls.add(() -> {
-                if (objects.getLast() instanceof BigInteger) {
-                    BigInteger v = (BigInteger) objects.removeLast();
-                    objects.add(v.negate());
-                }
-                else if (objects.getLast() instanceof Double) {
-                    Double v = (Double) objects.removeLast();
-                    objects.add(-v);
-                }
-            });
-
             calls.add(() -> visitExpr(ctx.expr(0)));
             return;
         }
 
 
         //Binarne
-        if (ctx.expr().size() == 2 && op != null) {
+        if (ctx.expr().size() == 2) {
             var left = ctx.expr(0);
             var right = ctx.expr(1);
+
             calls.add(() -> {
-                switch (op) {
-                    case ADD_NUMBERS -> {
-                        var leftResult = (BigInteger) objects.removeLast();
-                        var rightResult = (BigInteger) objects.removeLast();
-                        objects.add(leftResult.add(rightResult));
-                    }
-
-                    case ADD_REALS -> {
-                        var leftResult = (Double) objects.removeLast();
-                        var rightResult = (Double) objects.removeLast();
-                        objects.add(leftResult + rightResult);
-                    }
-
-                    case SUBTRACT_NUMBERS -> {
-                        var leftResult = (BigInteger) objects.removeLast();
-                        var rightResult = (BigInteger) objects.removeLast();
-                        objects.add(leftResult.subtract(rightResult));
-                    }
-
-                    case SUBTRACT_REALS -> {
-                        var leftResult = (Double) objects.removeLast();
-                        var rightResult = (Double) objects.removeLast();
-                        objects.add(leftResult - rightResult);
-                    }
-
-                    case AND -> {
-                        var leftResult = (Boolean) objects.removeLast();
-                        var rightResult = (Boolean) objects.removeLast();
-                        objects.add(leftResult && rightResult);
-                    }
-
-                    case OR -> {
-                        var leftResult = (Boolean) objects.removeLast();
-                        var rightResult = (Boolean) objects.removeLast();
-                        objects.add(leftResult || rightResult);
-                    }
-
+                var leftResult = objects.removeLast();
+                var rightResult = objects.removeLast();
+                if (op == Operators.DIVIDE_NUMBERS && ((BigInteger) rightResult).longValue() == 0) {
+                    throw new ScriptException(run, ScriptException.Type.RUNTIME_ERROR, ctx, "Division by zero");
                 }
+                objects.add(op.apply(leftResult, rightResult));
             });
 
             calls.add(() -> visitExpr(right));
@@ -352,7 +299,7 @@ public class EvaluationVisitor {
     }
 
     public void visitMapExpr(ArchitParser.MapExprContext ctx) {
-        // TODO (emil)
+        // TODO
     }
 
     public void visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {
