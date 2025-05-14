@@ -6,12 +6,13 @@ function fib(n: number): number {
         return 1;
     }
     else {
-        return fibPrint(n - 1) + fibPrint(n - 2);
+        return fib(n - 1) + fib(n - 2);
     }
 }
 
 var n: number = 10;
 var i: number = 1;
 while i <= n {
-    print(fib(i));
+    print("{fib(i)}");
     i += 1;
+}
