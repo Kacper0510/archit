@@ -42,7 +42,8 @@ public enum Operators {
 
     // Unary minus
     NEGATE_NUMBER((a, b) -> ((BigInteger) a).negate()),
-    NEGATE_REAL((a, b) -> - ((Double) a));
+    NEGATE_REAL((a, b) -> - ((Double) a)),
+    NO_OP((a, b) -> a);
 
     private final BiFunction<Object, Object, Object> function;
 

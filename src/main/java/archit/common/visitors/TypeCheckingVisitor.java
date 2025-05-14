@@ -227,7 +227,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         String[] paramNames = params.stream().map(p -> p.symbol().getText()).toArray(String[] ::new);
         Type retType = ctx.type() != null ? visit(ctx.type()) : null;
 
-        if (retType != null && ctx.scopeStat().statement().getLast().repeatStat() == null) {
+        if (retType != null && ctx.scopeStat().statement().getLast().returnStat() == null) {
             error(ctx, "No return statement at the end of '{}', which must return something", name);
         } 
 
@@ -306,6 +306,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         if (ctx.mapExpr() != null) return visit(ctx.mapExpr());
         if (ctx.enumExpr() != null) return visit(ctx.enumExpr());
         if (ctx.op != null && ctx.expr().size() == 1 && ctx.getText().startsWith("(")) {
+            tables.addOperatorMapping(ctx, Operators.NO_OP);
             return visit(ctx.expr(0));
         }
         // unary

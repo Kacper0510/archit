@@ -142,6 +142,11 @@ public class EvaluationVisitor {
             return;
         }
 
+        if (ctx.functionCall() != null) {
+            calls.add(() -> visitFunctionCall(ctx.functionCall()));
+            return;
+        }
+
         //operator
         Operators op = tables.getOperators().get(ctx);
 
@@ -212,7 +217,10 @@ public class EvaluationVisitor {
             if (function.isNative()) {
                 // kolejno: scriptRun, lista argumentów, typ zwracany
                 var impl = (BiFunction<ScriptRun, Object[], Object>) function.callInfo();
-                objects.add(impl.apply(run, args));
+                var result = impl.apply(run, args);
+                if (result != null) {
+                    objects.add(result);
+                }
             } else {  // jesli jest skryptowa
                 var decl = (ArchitParser.FunctionDeclContext) function.callInfo();
                 calls.add(new ReturnPointer());
