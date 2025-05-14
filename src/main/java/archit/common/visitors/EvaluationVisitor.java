@@ -17,7 +17,7 @@ public class EvaluationVisitor {
 
     //stosy
     private final List<Map<Integer, Object>> variables = new ArrayList<>();
-    private final List<Runnable> calls = new ArrayList<>();
+    public final List<Runnable> calls = new ArrayList<>();
     private final List<Object> objects = new ArrayList<>();
 
     public EvaluationVisitor(ScriptRun run, InfoTables tables) {

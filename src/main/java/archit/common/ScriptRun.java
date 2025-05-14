@@ -1,5 +1,6 @@
 package archit.common;
 
+import archit.common.visitors.EvaluationVisitor;
 import archit.common.visitors.TypeCheckingVisitor;
 import archit.parser.ArchitLexer;
 import archit.parser.ArchitParser;
@@ -100,6 +101,12 @@ public class ScriptRun {
             // stworzenie visitora i uruchomienie
             var typeChecker = new TypeCheckingVisitor(this);
             typeChecker.visit(tree);
+
+            var eval = new EvaluationVisitor(this, typeChecker.getTables());
+            eval.calls.add(() -> eval.visitProgram(tree));
+            while (!eval.calls.isEmpty()) {
+                eval.calls.removeLast().run();
+            }
         } catch (ScriptException e) {
             return false;
         } catch (RuntimeException e) {
