@@ -1,8 +1,10 @@
 package archit.common.visitors;
 
+import archit.common.Material;
 import archit.common.ScriptRun;
 import archit.common.ArchitFunction;
 import archit.parser.ArchitParser;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -293,7 +295,21 @@ public class EvaluationVisitor {
 
     public void visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {
         // TODO (emil)
-        return;
+        String namespace;
+        String id;
+
+        if (ctx.ID().size() == 2) {
+            namespace = ctx.ID().get(0).getText();
+            id = ctx.ID().get(1).getText();
+        } else {
+            namespace = Material.DEFAULT_NAMESPACE;
+            id = ctx.ID().get(0).getText();
+        }
+
+        calls.add(() -> {
+            Material mat = new Material(namespace, id);
+            objects.add(mat);
+        });
     }
 
     public void visitProgram(ArchitParser.ProgramContext ctx) {
