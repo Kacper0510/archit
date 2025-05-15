@@ -472,7 +472,6 @@ public class EvaluationVisitor {
             for (int i = 0; i < ctx.expr().size(); i++) {
                 exprs.add(objects.removeLast());
             }
-            Collections.reverse(exprs);
 
             StringBuilder sb = new StringBuilder();
             for (var c : ctx.children) {
