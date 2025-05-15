@@ -131,6 +131,11 @@ public class StandardLibrary implements Scope {
                     method.getParameterTypes()[i + 1]
                 );
             }
+            for (int j = i + 1; j < params.length; j++) {
+                if (paramNames[i].equals(paramNames[j])) {
+                    throw new IllegalArgumentException("Duplicate parameter name: " + paramNames[i]);
+                }
+            }
         }
 
         BiFunction<ScriptRun, Object[], Object> call = (run, p) -> {

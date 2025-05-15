@@ -1,0 +1,17 @@
+function factorial_it(x: number): number {
+    var i: number = 1;
+    while x > 0 {
+        i *= x;
+        x -= 1;
+    }
+    return i;
+}
+
+function factorial_rec(x: number): number {
+    if x == 0 or x == 1 {
+        return 1;
+    }
+    return x * factorial_rec(x-1);
+}
+
+print "{factorial_it(5)} {factorial_rec(5)}";

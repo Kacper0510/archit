@@ -6,7 +6,6 @@ import archit.parser.ArchitParserBaseVisitor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
@@ -190,10 +189,9 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
 
     @Override
     public Type visitElseStat(ArchitParser.ElseStatContext ctx) {
-        if(ctx.scopeStat() != null){
+        if (ctx.scopeStat() != null) {
             visit(ctx.scopeStat());
-        }
-        else{
+        } else {
             visit(ctx.ifStat());
         }
 
@@ -229,9 +227,23 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         String[] paramNames = params.stream().map(p -> p.symbol().getText()).toArray(String[] ::new);
         Type retType = ctx.type() != null ? visit(ctx.type()) : null;
 
+        for (int i = 0; i < paramNames.length; i++) {
+            for (int j = i + 1; j < paramNames.length; j++) {
+                if (paramNames[i].equals(paramNames[j])) {
+                    throw new ScriptException(
+                        run,
+                        ScriptException.Type.NAME_ERROR,
+                        ctx.functionParams().functionParam(j),
+                        "Duplicate parameter name: {}",
+                        paramNames[i]
+                    );
+                }
+            }
+        }
+
         if (retType != null && ctx.scopeStat().statement().getLast().returnStat() == null) {
             error(ctx, "No return statement at the end of '{}', which must return something", name);
-        } 
+        }  // TODO check for branches
 
         boolean ok = currentScope.defineFunction(name, retType, paramTypes, paramNames, ctx);
         if (!ok) {
