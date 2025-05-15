@@ -1,6 +1,5 @@
 plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
-	id 'com.gradleup.shadow' version '8.3.6'
 	id 'application'
 	id 'antlr'
 }
@@ -14,7 +13,7 @@ application {
 
 generateGrammarSource {
 	arguments += [
-		"-package", "archit.parser", "-visitor"
+		'-package', 'archit.parser', '-visitor', '-Xexact-output-dir'
 	]
 }
 
@@ -53,26 +52,6 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
 }
 
-def shadowJarPackedDeps = ['antlr4-runtime', 'jansi']
-
-tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-	// Bundle only antlr4-runtime
-	dependencies {
-		exclude {
-			!shadowJarPackedDeps.contains(it.moduleName)
-		}
-	}
-	// Exclude the default mappings
-	exclude "mappings/*"
-	// Overwrite the default jar file
-	archiveClassifier = ''
-}
-
-// Explicitly set the remapJar task to run before shadowJar
-tasks.named('startShadowScripts') {
-    mustRunAfter(tasks.named('remapJar'))
-}
-
 tasks.register('copyExamples', Copy) {
     from 'examples'
     into 'run/archit-scripts'
@@ -96,12 +75,25 @@ java {
 	targetCompatibility = JavaVersion.VERSION_21
 }
 
-jar {
-	inputs.property "archivesName", project.base.archivesName
+def jarPackedDeps = ['antlr4-runtime', 'jansi']
 
-	manifest {
-		attributes(
-			'Main-Class': project.app_main
-		)
+afterEvaluate {
+	jar {
+		inputs.property "archivesName", project.base.archivesName
+
+		manifest {
+			attributes(
+				'Main-Class': project.app_main
+			)
+		}
+
+		// Manual shadow JAR packing, do not try to refactor or everything will inevitably explode...
+		configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+			if (jarPackedDeps.contains(artifact.moduleVersion.id.name)) {
+				from(zipTree(artifact.file)) {
+					exclude 'META-INF/MANIFEST.MF'
+				}
+			}
+		}
 	}
 }

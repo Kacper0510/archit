@@ -10,7 +10,7 @@ Minecraft scripting language for automated structure generation, an AGH UST comp
 - Create a Minecraft instance with version set to **1.21.5**
 - Install [Fabric](https://fabricmc.net/) modloader
 - Put [Fabric API](https://modrinth.com/mod/fabric-api/versions) into your `mods` folder
-- Download the latest version of the mod from [GitHub Actions](https://github.com/Kacper0510/archit/actions) and place it in the `mods` folder as well
+- Download the latest version of the mod from [GitHub Actions](https://github.com/Kacper0510/archit/actions?query=branch%3Amaster) and place it in the `mods` folder as well
 
 ### As a Minecraft mod, locally
 - Clone the repository:
@@ -24,7 +24,7 @@ $ ./gradlew runClient # OR ./gradlew runServer
 ```
 
 ### As a standalone program, latest build
-- Download the latest JAR from [GitHub Actions](https://github.com/Kacper0510/archit/actions)
+- Download the latest JAR from [GitHub Actions](https://github.com/Kacper0510/archit/actions?query=branch%3Amaster)
 - Run with Java:
 ```bash
 $ java -jar archit.jar <path to input file>

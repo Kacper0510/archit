@@ -21,6 +21,7 @@ public class ArchitMod implements ModInitializer {
     @Override
     public void onInitialize() {
         interpreter = new Interpreter(new LoggingImpl());
+        interpreter.getStandardLibrary().registerNatives(new PlatformNatives());
 
         scriptDirectory = FabricLoader.getInstance().getGameDir().resolve("archit-scripts");
         try {
