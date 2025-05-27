@@ -204,6 +204,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             throw new ScriptException(run, TYPE_ERROR, ctx, "Condition in 'while' must be logic, found {}", cond);
         }
         visit(ctx.scopeStat());
+        DeadCodeVisitor.checkLoop(ctx, run);
         return null;
     }
 
@@ -214,6 +215,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             throw new ScriptException(run, TYPE_ERROR, ctx, "Repeat count must be number, found {}", times);
         }
         visit(ctx.scopeStat());
+        DeadCodeVisitor.checkLoop(ctx, run);
         return null;
     }
 
@@ -240,9 +242,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             }
         }
 
-        if (retType != null && ctx.scopeStat().statement().getLast().returnStat() == null) {
-            // todo
-        }  // TODO check for branches
+        DeadCodeVisitor.checkFunction(ctx, retType == null, run);
 
         boolean ok = currentScope.defineFunction(name, retType, paramTypes, paramNames, ctx);
         if (!ok) {
@@ -471,6 +471,11 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                     if (left.asListType() != null && right.equals(Type.number)) {
                         tables.addOperatorMapping(ctx, Operators.LIST_INDEX);
                         return left.asListType().getElements();
+                    }
+                    var mt = left.asMapType();
+                    if (mt != null && right.equals(mt.getKey())) {
+                        tables.addOperatorMapping(ctx, Operators.MAP_GET);
+                        return mt.getValue();
                     }
                     break;
             }
