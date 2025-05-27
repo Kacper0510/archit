@@ -31,7 +31,9 @@ public class ScriptException extends RuntimeException {
         SYNTAX_ERROR("Syntax error"),
         RUNTIME_ERROR("Runtime error"),
         TYPE_ERROR("Type error"),
-        NAME_ERROR("Name error");
+        NAME_ERROR("Name error"),
+        DEAD_CODE("Dead code"),
+        LOGIC_ERROR("Logic error");
 
         private final String message;
 
