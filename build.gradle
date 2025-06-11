@@ -66,6 +66,34 @@ tasks.named('runServer') {
     dependsOn 'copyExamples'
 }
 
+tasks.register('fixAntlrStructure') {
+    dependsOn 'generateGrammarSource'
+    mustRunAfter 'generateGrammarSource'
+    doLast {
+        copy {
+            from 'build/generated-src/antlr/main'
+            into 'build/generated-fix/archit/parser'
+        }
+        delete 'build/generated-src'
+    }
+}
+
+tasks.named('generateGrammarSource') {
+    finalizedBy 'fixAntlrStructure'
+}
+
+tasks.named('compileJava') {
+    dependsOn 'fixAntlrStructure'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['build/generated-fix', 'src/main/java']
+        }
+    }
+}
+
 tasks.named('run') {
 	systemProperty "jansi.force", "true"
 }
