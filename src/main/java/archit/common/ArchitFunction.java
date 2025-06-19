@@ -1,14 +1,15 @@
 package archit.common;
 
 import java.util.Arrays;
+import java.util.function.BiFunction;
 
 public record ArchitFunction(  // NOSONAR
     String name,
     Type returnType,
     Type[] params,
-    String[] paramNames,
     boolean isNative,
-    Object callInfo
+    Object callInfo,
+    String[] paramNames
 ) {
     @Override
     public final int hashCode() {
@@ -28,5 +29,15 @@ public record ArchitFunction(  // NOSONAR
             return false;
         }
         return Arrays.equals(params, other.params);
+    }
+
+    public static ArchitFunction fromFunction(
+        String name,
+        Type returnType,
+        Type[] params,
+        BiFunction<ScriptRun, Object[], Object> function,
+        String... paramNames
+    ) {
+        return new ArchitFunction(name, returnType, params, true, function, paramNames);
     }
 }

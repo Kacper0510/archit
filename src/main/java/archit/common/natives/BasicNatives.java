@@ -1,14 +1,29 @@
 package archit.common.natives;
 
+import archit.common.ArchitFunction;
 import archit.common.ScriptRun;
+import archit.common.Type;
+import archit.common.stdlib.ArchitDynamic;
 import archit.common.stdlib.ArchitNative;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 public class BasicNatives {
-    @ArchitNative("native print(message: string);")
+    @ArchitNative("native __old_print(message: string);")
     public void print(ScriptRun run, String message) {
         run.getInterpreter().getLogger().scriptPrint(run, message);
+    }
+
+    @ArchitDynamic
+    public Optional<ArchitFunction> print(Type[] types) {
+        if (types.length == 1) {
+            return Optional.of(ArchitFunction.fromFunction("print", null, types, (run, p) -> {
+                run.getInterpreter().getLogger().scriptPrint(run, types[0].toStringObject(p[0]));
+                return null;
+            }, "object"));
+        }
+        return Optional.empty();
     }
 
     @ArchitNative("native move(direction: <posx, negx, posy, negy, posz, negz>);")

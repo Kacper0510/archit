@@ -35,7 +35,7 @@ public class ScopeImpl implements Scope {
     public boolean defineFunction(
         String name, Type returnType, Type[] params, String[] paramNames, FunctionDeclContext ctx
     ) {
-        var function = new ArchitFunction(name, returnType, params, paramNames, false, ctx);
+        var function = new ArchitFunction(name, returnType, params, false, ctx, paramNames);
         functions.putIfAbsent(function.name(), new HashSet<>());
         return functions.get(function.name()).add(function);
     }

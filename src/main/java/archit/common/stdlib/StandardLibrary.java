@@ -151,7 +151,7 @@ public class StandardLibrary implements Scope {
                 );
             }
         };
-        return new ArchitFunction(name, returnType, params, paramNames, true, call);
+        return ArchitFunction.fromFunction(name, returnType, params, call, paramNames);
     }  // clang-format on
 
     private static class TypeMismatchException extends Exception {

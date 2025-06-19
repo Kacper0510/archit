@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class Type {
@@ -30,6 +31,10 @@ public class Type {
     @Override
     public String toString() {
         return name;
+    }
+
+    public String toStringObject(Object o) {
+        return o.toString();
     }
 
     @Override
@@ -60,6 +65,12 @@ public class Type {
         @Override
         public String toString() {
             return "[" + elements + "]";
+        }
+
+        @Override
+        public String toStringObject(Object o) {
+            var list = (List<?>) o;
+            return "[" + list.stream().map(elements::toStringObject).collect(Collectors.joining(", ")) + "]";
         }
 
         @Override
@@ -98,6 +109,17 @@ public class Type {
         }
 
         @Override
+        public String toStringObject(Object o) {
+            var map = (Map<?, ?>) o;
+            return "|"
+                + map.entrySet()
+                      .stream()
+                      .map(e -> key.toStringObject(e.getKey()) + " -> " + value.toStringObject(e.getValue()))
+                      .collect(Collectors.joining(", "))
+                + "|";
+        }
+
+        @Override
         public MapType asMapType() {
             return this;
         }
@@ -122,6 +144,11 @@ public class Type {
         @Override
         public String toString() {
             return "<" + String.join(", ", members) + ">";
+        }
+
+        @Override
+        public String toStringObject(Object o) {
+            return "$" + o.toString();
         }
 
         @Override
