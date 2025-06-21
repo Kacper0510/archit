@@ -421,7 +421,10 @@ public class EvaluationVisitor {
 
     public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
 
-        //TODO
+        calls.add(() ->{
+            BigInteger iter = (BigInteger) objects.removeLast();
+            visitRepeatStat(ctx, iter.intValue());
+        });
 
         //obliczanie wyrażenia
         calls.add(() -> {
@@ -430,6 +433,17 @@ public class EvaluationVisitor {
             }
             else{
                 visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
+            }
+        });
+    }
+
+    public void visitRepeatStat(ArchitParser.RepeatStatContext ctx, int iter) {
+        calls.add(() -> {
+            if (iter > 0) {
+                calls.add(new BreakPointer());
+                calls.add(() -> visitRepeatStat(ctx, iter - 1));
+                calls.add(new ContinuePointer());
+                calls.add(() -> visitScopeStat(ctx.scopeStat()));
             }
         });
     }
