@@ -11,9 +11,12 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class ScriptRun {
     private static final long TICK_LIMIT_NANOS = 3_000_000;
+    private static final DateTimeFormatter START_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     /**
      * Metadata of the current run - its additional implementation specific details.
@@ -26,11 +29,17 @@ public class ScriptRun {
     private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
                                                         // chyba ze wywoływane z konsoli to domyslnie 0
     private EvaluationVisitor visitor;
+    private final LocalTime startTime = LocalTime.now();
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
+    }
+
+    @Override
+    public String toString() {
+        return scriptLocation.getFileName().toString() + "@" + START_FORMATTER.format(startTime);
     }
 
     // getter i setter dla wirtualnego kursora

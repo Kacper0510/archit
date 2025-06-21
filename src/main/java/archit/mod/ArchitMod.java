@@ -43,6 +43,13 @@ public class ArchitMod implements ModInitializer {
                                 context -> runScript(context.getSource(), StringArgumentType.getString(context, "name"))
                             )
                     ))
+                    .then(CommandManager.literal("stop").then(
+                        CommandManager.argument("run_id", StringArgumentType.greedyString())
+                            .suggests(new RunIdSuggestions(this))
+                            .executes(
+                                context -> stopScript(StringArgumentType.getString(context, "run_id"))
+                            )
+                    ))
             );
         });
 
@@ -56,6 +63,16 @@ public class ArchitMod implements ModInitializer {
         run.setCursor((int) pos.x, (int) pos.y, (int) pos.z);
         boolean success = run.startExecution();
         return success ? 1 : 0;
+    }
+
+    private int stopScript(String runId) {
+        var runs = new ArrayList<>(interpreter.getCurrentRuns());
+        for (var run : runs) {
+            if (run.toString().equals(runId)) {
+                interpreter.getCurrentRuns().remove(run);
+            }
+        }
+        return runs.size() - interpreter.getCurrentRuns().size();
     }
 
     private void onEachTick() {
