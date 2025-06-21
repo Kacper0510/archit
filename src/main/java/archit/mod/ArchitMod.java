@@ -2,6 +2,7 @@ package archit.mod;
 
 import archit.common.Interpreter;
 import archit.common.ScriptRun;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,18 +38,30 @@ public class ArchitMod implements ModInitializer {
                 CommandManager.literal("archit")
                     .requires(source -> source.hasPermissionLevel(2))
                     .then(CommandManager.literal("run").then(
-                        CommandManager.argument("name", StringArgumentType.string())
+                        CommandManager.argument("script_name", StringArgumentType.string())
                             .suggests(new ScriptPathSuggestions(this))
                             .executes(
-                                context -> runScript(context.getSource(), StringArgumentType.getString(context, "name"))
+                                context
+                                -> runScript(context.getSource(), StringArgumentType.getString(context, "script_name"))
                             )
                     ))
                     .then(CommandManager.literal("stop").then(
                         CommandManager.argument("run_id", StringArgumentType.greedyString())
                             .suggests(new RunIdSuggestions(this))
-                            .executes(
-                                context -> stopScript(StringArgumentType.getString(context, "run_id"))
-                            )
+                            .executes(context -> stopScript(StringArgumentType.getString(context, "run_id")))
+                    ))
+                    .then(CommandManager.literal("animate").then(
+                        CommandManager.argument("period", IntegerArgumentType.integer(1, 100))
+                            .then(CommandManager.argument("script_name", StringArgumentType.string())
+                                .suggests(new ScriptPathSuggestions(this))
+                                .executes(
+                                    context
+                                    -> runScript(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "script_name"),
+                                        IntegerArgumentType.getInteger(context, "period")
+                                    )
+                                ))
                     ))
             );
         });
@@ -59,6 +72,15 @@ public class ArchitMod implements ModInitializer {
     private int runScript(ServerCommandSource source, String scriptName) {
         Path scriptPath = scriptDirectory.resolve(scriptName);
         var run = new ScriptRun(interpreter, scriptPath, source);
+        var pos = source.getPosition();
+        run.setCursor((int) pos.x, (int) pos.y, (int) pos.z);
+        boolean success = run.startExecution();
+        return success ? 1 : 0;
+    }
+
+    private int runScript(ServerCommandSource source, String scriptName, int animationSpeed) {
+        Path scriptPath = scriptDirectory.resolve(scriptName);
+        var run = new ScriptRun(interpreter, scriptPath, source, animationSpeed);
         var pos = source.getPosition();
         run.setCursor((int) pos.x, (int) pos.y, (int) pos.z);
         boolean success = run.startExecution();

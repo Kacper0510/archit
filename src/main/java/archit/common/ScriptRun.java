@@ -4,15 +4,15 @@ import archit.common.visitors.EvaluationVisitor;
 import archit.common.visitors.TypeCheckingVisitor;
 import archit.parser.ArchitLexer;
 import archit.parser.ArchitParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public class ScriptRun {
     private static final long TICK_LIMIT_NANOS = 3_000_000;
@@ -30,11 +30,18 @@ public class ScriptRun {
                                                         // chyba ze wywoływane z konsoli to domyslnie 0
     private EvaluationVisitor visitor;
     private final LocalTime startTime = LocalTime.now();
+    private Optional<Integer> animationSpeed = Optional.empty();  // animation speed in ticks, if applicable
+    private long ticks = -1;
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
+    }
+
+    public ScriptRun(Interpreter i, Path f, Object m, int animationSpeed) {
+        this(i, f, m);
+        this.animationSpeed = Optional.of(animationSpeed);
     }
 
     @Override
@@ -44,14 +51,28 @@ public class ScriptRun {
 
     // getter i setter dla wirtualnego kursora
     public void setCursor(int x, int y, int z) {
-        this.cursorX = x; this.cursorY = y; this.cursorZ = z;
+        this.cursorX = x;
+        this.cursorY = y;
+        this.cursorZ = z;
     }
+
     public void moveCursor(int x, int y, int z) {
-        this.cursorX += x; this.cursorY += y; this.cursorZ += z;
+        this.cursorX += x;
+        this.cursorY += y;
+        this.cursorZ += z;
     }
-    public int getCursorX() { return cursorX; }
-    public int getCursorY() { return cursorY; }
-    public int getCursorZ() { return cursorZ; }
+
+    public int getCursorX() {
+        return cursorX;
+    }
+
+    public int getCursorY() {
+        return cursorY;
+    }
+
+    public int getCursorZ() {
+        return cursorZ;
+    }
 
     public ScriptRun(Interpreter interpreter, Path file) {
         this(interpreter, file, null);
@@ -121,11 +142,20 @@ public class ScriptRun {
     }
 
     public void runNextTick() {
+        ticks++;
+        if (animationSpeed.isPresent() && ticks % animationSpeed.get() != 0) {
+            return;
+        }
+
         var start = System.nanoTime();
         do {
             var call = visitor.getNextCall();
             if (call.isEmpty()) {
                 stopExecution();
+                return;
+            } else if (animationSpeed.isPresent()
+                       && call.get() instanceof EvaluationVisitor.FunctionCallDebugInfo fcdi) {
+                interpreter.getLogger().scriptDebug(this, "Function call: {}", fcdi);
                 return;
             }
             call.get().run();

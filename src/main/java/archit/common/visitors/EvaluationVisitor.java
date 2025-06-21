@@ -3,13 +3,18 @@ package archit.common.visitors;
 import archit.common.Material;
 import archit.common.ScriptException;
 import archit.common.ScriptRun;
+import archit.common.Type.Kind;
 import archit.common.ArchitFunction;
 import archit.parser.ArchitParser;
+
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.math.BigInteger;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class EvaluationVisitor {
     private final ScriptRun run;
@@ -194,6 +199,28 @@ public class EvaluationVisitor {
         }
     }
 
+    public record FunctionCallDebugInfo(ArchitFunction function, Object[] values) implements Runnable {  //NOSONAR
+        @Override
+        public void run() {}
+
+        @Override
+        public String toString() {
+            var sb = new StringBuilder();
+            sb.append(function.name());
+            sb.append("(");
+            var params = IntStream.range(0, values.length).mapToObj(i -> {
+                var type = function.params()[i];
+                if (type.getKind() == Kind.SIMPLE) {
+                    return type.toStringObject(values[i]);
+                }
+                return "...";
+            }).collect(Collectors.joining(", "));
+            sb.append(params);
+            sb.append(")");
+            return sb.toString();
+        }
+    }
+
     public void visitReturnStat(ArchitParser.ReturnStatContext ctx) {
         calls.add(() -> {
             Runnable last = null;
@@ -218,7 +245,8 @@ public class EvaluationVisitor {
             for (int i = n - 1; i >= 0; i--) {
                 args[i] = objects.removeLast();
             }
-
+            
+            calls.add(new FunctionCallDebugInfo(function, args));
             if (function.isNative()) {
                 // kolejno: scriptRun, lista argumentów, typ zwracany
                 var impl = (BiFunction<ScriptRun, Object[], Object>) function.callInfo();

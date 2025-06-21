@@ -14,6 +14,11 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class Type {
     private final String name;
     private final Class<?> equivalent;
+    protected Kind kind = Kind.SIMPLE;
+
+    public enum Kind {
+        SIMPLE, COMPLEX, PSEUDO
+    }
 
     private Type(String name, Class<?> equivalent) {
         this.name = name;
@@ -26,6 +31,10 @@ public class Type {
 
     public final Class<?> getEquivalent() {
         return equivalent;
+    }
+
+    public final Kind getKind() {
+        return kind;
     }
 
     @Override
@@ -55,6 +64,7 @@ public class Type {
 
         private ListType(Type elements) {
             super("list", List.class);
+            this.kind = Kind.COMPLEX;
             this.elements = elements;
         }
 
@@ -85,6 +95,7 @@ public class Type {
 
         private MapType(Type key, Type value) {
             super("map", Map.class);
+            this.kind = Kind.COMPLEX;
             this.key = key;
             this.value = value;
         }
