@@ -42,4 +42,7 @@ public class BasicNatives {
             BigInteger.valueOf(run.getCursorZ())
         );
     }
+
+    @ArchitNative("native args(): string;")
+    public String args(ScriptRun run) {return run.getArgs();}
 }
