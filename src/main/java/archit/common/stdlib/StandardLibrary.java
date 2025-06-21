@@ -4,7 +4,6 @@ import archit.common.ArchitFunction;
 import archit.common.Logging;
 import archit.common.Scope;
 import archit.common.ScriptErrorListener;
-import archit.common.ScriptException;
 import archit.common.ScriptRun;
 import archit.common.Type;
 import archit.common.natives.*;
@@ -16,12 +15,15 @@ import archit.parser.ArchitParser.VarDeclContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
@@ -34,6 +36,7 @@ public class StandardLibrary implements Scope {
     };
 
     private final Map<String, Set<ArchitFunction>> registeredFunctions = new HashMap<>();
+    private final Map<String, Function<Type[], Optional<ArchitFunction>>> registeredDynamics = new HashMap<>();
     private final Logging logger;
 
     public StandardLibrary(Logging logger) {
@@ -46,6 +49,7 @@ public class StandardLibrary implements Scope {
             for (var m : n.getClass().getMethods()) {
                 var isStatic = Modifier.isStatic(m.getModifiers());
                 registerNative(m, isStatic ? null : n);
+                registerDynamic(m, isStatic ? null : n);
             }
         }
     }
@@ -145,14 +149,66 @@ public class StandardLibrary implements Scope {
                 System.arraycopy(p, 0, paramExt, 1, p.length);
                 return method.invoke(nativeObject, paramExt);
             } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new ScriptException(
-                    run, ScriptException.Type.RUNTIME_ERROR, 0, 0,
-                    "Native function caught an exception: {}", e.getMessage()
-                );
+                throw new IllegalStateException("Native function lambda caught an exception", e);
             }
         };
         return ArchitFunction.fromFunction(name, returnType, params, call, paramNames);
     }  // clang-format on
+
+    private void registerDynamic(Method method, Object nativeObject) {
+        if (!method.canAccess(nativeObject) || !method.isAnnotationPresent(ArchitDynamic.class)) {
+            return;
+        }
+        String customName = method.getAnnotation(ArchitDynamic.class).name();
+        if (customName.isEmpty()) {
+            customName = method.getName();
+        }
+
+        try {
+            if (method.getGenericReturnType() instanceof ParameterizedType pt) {
+                if (!pt.getRawType().equals(Optional.class)
+                    || !pt.getActualTypeArguments()[0].equals(ArchitFunction.class)) {
+                    throw new IllegalArgumentException("Return type must be exactly Optional<ArchitFunction>!");
+                }
+            } else {
+                throw new IllegalArgumentException("Return type must be exactly Optional<ArchitFunction>!");
+            }
+            if (method.getParameterCount() != 1) {
+                throw new IllegalArgumentException("Dynamic function must take exactly one parameter, Type[]!");
+            }
+            if (!method.getParameterTypes()[0].equals(Type[].class)) {
+                throw new TypeMismatchException(
+                    "Dynamic parameter does not match Type[]!", Type[].class, method.getParameterTypes()[0]
+                );
+            }
+
+            @SuppressWarnings("unchecked")
+            Function<Type[], Optional<ArchitFunction>> function = types -> {
+                try {
+                    return (Optional<ArchitFunction>) method.invoke(nativeObject, (Object) types);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new IllegalStateException("Dynamic function lambda caught an exception", e);
+                }
+            };
+
+            boolean notDuplicate = registeredDynamics.putIfAbsent(customName, function) == null;
+            if (notDuplicate) {
+                logger.systemInfo("Successfully registered dynamic function: {}", customName);
+            } else {
+                logger.systemError("Tried to register two identical dynamic functions: {}", customName);
+            }
+        } catch (TypeMismatchException e) {
+            logger.systemError(
+                e,
+                "Error while type checking dynamic function declaration: {}, expected: {}, found: {}",
+                method.getName(),
+                e.expected,
+                e.found
+            );
+        } catch (IllegalArgumentException e) {
+            logger.systemError(e, "Error in dynamic function declaration: {}", method.getName());
+        }
+    }
 
     private static class TypeMismatchException extends Exception {
         public final Class<?> expected;
@@ -165,10 +221,6 @@ public class StandardLibrary implements Scope {
         }
     }
 
-    public Map<String, Set<ArchitFunction>> getRegisteredFunctions() {
-        return registeredFunctions;
-    }
-
     @Override
     public ArchitFunction resolveFunction(String name, Type[] params) {
         if (registeredFunctions.containsKey(name)) {
@@ -179,6 +231,11 @@ public class StandardLibrary implements Scope {
                     .findAny();
             if (f.isPresent()) {
                 return f.get();
+            }
+        } else if (registeredDynamics.containsKey(name)) {
+            var d = registeredDynamics.get(name).apply(params);
+            if (d.isPresent()) {
+                return d.get();
             }
         }
         return null;

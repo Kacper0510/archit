@@ -4,8 +4,10 @@ var x: number = 1;
     {
         x = 4;
         var x: number = 3;
-        print "{x}";
+        print x;
     }
     print "{x}";
 }
 print "{x}";
+
+print 1.0e-1;
