@@ -108,6 +108,7 @@ public class ScriptRun {
             typeChecker.visit(tree);
             visitor = new EvaluationVisitor(this, typeChecker.getTables(), tree);
             interpreter.getCurrentRuns().add(this);
+            interpreter.getLogger().scriptDebug(this, "Script started: {}", toString());
         } catch (ScriptException e) {
             return false;
         } catch (RuntimeException e) {
@@ -133,5 +134,6 @@ public class ScriptRun {
 
     public void stopExecution() {
         interpreter.getCurrentRuns().remove(this);
+        interpreter.getLogger().scriptDebug(this, "Script stopped: {}", toString());
     }
 }

@@ -9,6 +9,7 @@ public interface Logging {
     void systemError(Throwable t, String format, Object... objects);
     void scriptPrint(ScriptRun run, String text);
     void scriptError(ScriptRun run, String format, Object... objects);
+    void scriptDebug(ScriptRun run, String format, Object... objects);
 
     default List<String> parseFormatAndSubstitute(String format, Object... objects) {
         var split = (format + " ").split("\\{\\}");

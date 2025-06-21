@@ -69,7 +69,7 @@ public class ArchitMod implements ModInitializer {
         var runs = new ArrayList<>(interpreter.getCurrentRuns());
         for (var run : runs) {
             if (run.toString().equals(runId)) {
-                interpreter.getCurrentRuns().remove(run);
+                run.stopExecution();
             }
         }
         return runs.size() - interpreter.getCurrentRuns().size();
