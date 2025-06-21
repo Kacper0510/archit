@@ -13,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ScriptRun {
+    private static final long TICK_LIMIT_NANOS = 3_000_000;
+
     /**
      * Metadata of the current run - its additional implementation specific details.
      * In Minecraft mode - {@link net.minecraft.server.command.ServerCommandSource},
@@ -23,18 +25,12 @@ public class ScriptRun {
     private final Path scriptLocation;
     private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
                                                         // chyba ze wywoływane z konsoli to domyslnie 0
+    private EvaluationVisitor visitor;
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
-
-        if (metadata instanceof net.minecraft.server.command.ServerCommandSource source) {
-            var pos = source.getPosition();  // pozycja gracza bo to on wpisuje komende
-            this.cursorX = (int) pos.x;
-            this.cursorY = (int) pos.y;
-            this.cursorZ = (int) pos.z - 1;
-        }
     }
 
     // getter i setter dla wirtualnego kursora
@@ -67,7 +63,7 @@ public class ScriptRun {
     /**
      * @return true if run was successful, false if there were any errors
      */
-    public boolean run() {
+    public boolean startExecution() {
         if (!Files.exists(scriptLocation)) {
             interpreter.getLogger().scriptError(this, "Script file does not exist!");
             return false;
@@ -101,12 +97,8 @@ public class ScriptRun {
             // stworzenie visitora i uruchomienie
             var typeChecker = new TypeCheckingVisitor(this);
             typeChecker.visit(tree);
-
-            var eval = new EvaluationVisitor(this, typeChecker.getTables());
-            eval.calls.add(() -> eval.visitProgram(tree));
-            while (!eval.calls.isEmpty()) {
-                eval.calls.removeLast().run();
-            }
+            visitor = new EvaluationVisitor(this, typeChecker.getTables(), tree);
+            interpreter.getCurrentRuns().add(this);
         } catch (ScriptException e) {
             return false;
         } catch (RuntimeException e) {
@@ -116,5 +108,21 @@ public class ScriptRun {
         }
 
         return true;
+    }
+
+    public void runNextTick() {
+        var start = System.nanoTime();
+        do {
+            var call = visitor.getNextCall();
+            if (call.isEmpty()) {
+                stopExecution();
+                return;
+            }
+            call.get().run();
+        } while (System.nanoTime() - start < TICK_LIMIT_NANOS);
+    }
+
+    public void stopExecution() {
+        interpreter.getCurrentRuns().remove(this);
     }
 }

@@ -19,13 +19,18 @@ public class EvaluationVisitor {
 
     //stosy
     private final List<Map<Integer, Object>> variables = new ArrayList<>();
-    public final List<Runnable> calls = new ArrayList<>();
+    private final List<Runnable> calls = new ArrayList<>();
     private final List<Object> objects = new ArrayList<>();
 
-    public EvaluationVisitor(ScriptRun run, InfoTables tables) {
+    public EvaluationVisitor(ScriptRun run, InfoTables tables, ArchitParser.ProgramContext tree) {
         this.run = run;
         this.tables = tables;
         this.variables.add(new HashMap<>());
+        this.calls.add(() -> visitProgram(tree));
+    }
+
+    public Optional<Runnable> getNextCall() {
+        return calls.isEmpty() ? Optional.empty() : Optional.of(calls.removeLast());
     }
 
     private void putVariable(int id, Object value) {

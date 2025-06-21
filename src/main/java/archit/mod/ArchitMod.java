@@ -6,8 +6,10 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -43,14 +45,24 @@ public class ArchitMod implements ModInitializer {
                     ))
             );
         });
+
+        ServerTickEvents.END_WORLD_TICK.register(world -> onEachTick());
     }
 
     private int runScript(ServerCommandSource source, String scriptName) {
         Path scriptPath = scriptDirectory.resolve(scriptName);
         var run = new ScriptRun(interpreter, scriptPath, source);
-        interpreter.getCurrentRuns().add(run);
-        boolean success = run.run();
-        interpreter.getCurrentRuns().remove(run);
+        var pos = source.getPosition();
+        run.setCursor((int) pos.x, (int) pos.y, (int) pos.z);
+        boolean success = run.startExecution();
         return success ? 1 : 0;
+    }
+
+    private void onEachTick() {
+        // to avoid ConcurrentModificationException
+        var runs = new ArrayList<>(interpreter.getCurrentRuns());
+        for (var run : runs) {
+            run.runNextTick();
+        }
     }
 }
