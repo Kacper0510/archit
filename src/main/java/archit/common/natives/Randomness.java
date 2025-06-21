@@ -26,6 +26,13 @@ public class Randomness {
         return BigInteger.valueOf(run.getRandom().nextLong(min.longValueExact(),max.longValueExact()));
     }
 
+    @ArchitNative("native seed(value: number);")
+    public void seed(ScriptRun run, BigInteger value) {run.getRandom().setSeed(value.longValue());}
+
+    @ArchitNative("native seed(value: real);")
+    public void seed(ScriptRun run, Double value) {run.getRandom().setSeed(value.longValue());}
+
+
 
 
 
