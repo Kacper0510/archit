@@ -22,13 +22,15 @@ public class ScriptRun {
     private final Object metadata;
     private final Interpreter interpreter;
     private final Path scriptLocation;
+    private String args = "";
     private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
     private Random random = new Random();                       // chyba ze wywoływane z konsoli to domyslnie 0
 
-    public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
+    public ScriptRun(Interpreter interpreter, Path file, Object metadata, String args) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
+        this.args = args != null ? args : "";
 
         if (metadata instanceof net.minecraft.server.command.ServerCommandSource source) {
             var pos = source.getPosition();  // pozycja gracza bo to on wpisuje komende
@@ -48,10 +50,12 @@ public class ScriptRun {
     public int getCursorX() { return cursorX; }
     public int getCursorY() { return cursorY; }
     public int getCursorZ() { return cursorZ; }
+
     public Random getRandom() { return random; }
+    public String getArgs() {return args;}
 
     public ScriptRun(Interpreter interpreter, Path file) {
-        this(interpreter, file, null);
+        this(interpreter, file, null, "");
     }
 
     public Object getMetadata() {

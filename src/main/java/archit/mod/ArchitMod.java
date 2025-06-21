@@ -37,17 +37,27 @@ public class ArchitMod implements ModInitializer {
                     .then(CommandManager.literal("run").then(
                         CommandManager.argument("name", StringArgumentType.string())
                             .suggests(new ScriptPathSuggestions(this))
-                            .executes(
-                                context -> runScript(context.getSource(), StringArgumentType.getString(context, "name"))
-                            )
-                    ))
+                                .then(CommandManager.argument("args", StringArgumentType.greedyString()))
+                                    .executes(
+                                        context -> runScript(
+                                                context.getSource(), StringArgumentType.getString(context, "name"),
+                                                StringArgumentType.getString(context, "args")
+                                        )
+                                    )
+                        )
+                        .executes(context -> runScript(
+                                context.getSource(),
+                                StringArgumentType.getString(context, "name"),
+                                "")
+                        )
+                    )
             );
         });
     }
 
-    private int runScript(ServerCommandSource source, String scriptName) {
+    private int runScript(ServerCommandSource source, String scriptName, String args) {
         Path scriptPath = scriptDirectory.resolve(scriptName);
-        var run = new ScriptRun(interpreter, scriptPath, source);
+        var run = new ScriptRun(interpreter, scriptPath, source, args);
         interpreter.getCurrentRuns().add(run);
         boolean success = run.run();
         interpreter.getCurrentRuns().remove(run);
