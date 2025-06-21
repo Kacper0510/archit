@@ -31,6 +31,7 @@ public class StandardLibrary implements Scope {
         new MathNatives(),
         new BasicNatives(),
         new Casts(),
+        new Randomness(),
     };
 
     private final Map<String, Set<ArchitFunction>> registeredFunctions = new HashMap<>();
