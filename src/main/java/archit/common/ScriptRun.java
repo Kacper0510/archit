@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Random;
 
 public class ScriptRun {
     /**
@@ -22,7 +23,7 @@ public class ScriptRun {
     private final Interpreter interpreter;
     private final Path scriptLocation;
     private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
-                                                        // chyba ze wywoływane z konsoli to domyslnie 0
+    private Random random = new Random();                       // chyba ze wywoływane z konsoli to domyslnie 0
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
         this.interpreter = interpreter;
@@ -47,6 +48,7 @@ public class ScriptRun {
     public int getCursorX() { return cursorX; }
     public int getCursorY() { return cursorY; }
     public int getCursorZ() { return cursorZ; }
+    public Random getRandom() { return random; }
 
     public ScriptRun(Interpreter interpreter, Path file) {
         this(interpreter, file, null);
