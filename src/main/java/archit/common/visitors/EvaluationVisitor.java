@@ -91,12 +91,29 @@ public class EvaluationVisitor {
         }
     }
 
+    private class ContinueBreakPointer implements Runnable {
+        @Override
+        public void run() {}
+    }
+
     public void visitBreakStat(ArchitParser.BreakStatContext ctx) {
-        // TODO
+        calls.add(() -> {
+            Runnable last = null;
+            while (!(last instanceof ContinueBreakPointer)) {
+                last = calls.removeLast();
+            }
+            last.run();
+        });
     }
 
     public void visitContinueStat(ArchitParser.ContinueStatContext ctx) {
-        // TODO
+        calls.add(() -> {
+            Runnable last = null;
+            while (!(last instanceof ContinueBreakPointer)) {
+                last = calls.removeLast();
+            }
+            last.run();
+        });
     }
 
     public void visitExpr(ArchitParser.ExprContext ctx) {
