@@ -91,7 +91,12 @@ public class EvaluationVisitor {
         }
     }
 
-    private class ContinueBreakPointer implements Runnable {
+    private class ContinuePointer implements Runnable {
+        @Override
+        public void run() {}
+    }
+
+    private class BreakPointer implements Runnable {
         @Override
         public void run() {}
     }
@@ -99,7 +104,7 @@ public class EvaluationVisitor {
     public void visitBreakStat(ArchitParser.BreakStatContext ctx) {
         calls.add(() -> {
             Runnable last = null;
-            while (!(last instanceof ContinueBreakPointer)) {
+            while (!(last instanceof BreakPointer)) {
                 last = calls.removeLast();
             }
             last.run();
@@ -109,7 +114,7 @@ public class EvaluationVisitor {
     public void visitContinueStat(ArchitParser.ContinueStatContext ctx) {
         calls.add(() -> {
             Runnable last = null;
-            while (!(last instanceof ContinueBreakPointer)) {
+            while (!(last instanceof ContinuePointer)) {
                 last = calls.removeLast();
             }
             last.run();
@@ -416,15 +421,7 @@ public class EvaluationVisitor {
 
     public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
 
-        calls.add(() -> {
-            var howMany = (BigInteger) objects.removeLast();
-            for (long i = 0; i < howMany.longValue(); i++) {
-                calls.add(() -> {
-                    visitScopeStat(ctx.scopeStat());
-                });
-            }
-        });
-
+        //TODO
 
         //obliczanie wyrażenia
         calls.add(() -> {
@@ -468,7 +465,9 @@ public class EvaluationVisitor {
         calls.add(() -> {
             Boolean cond = (Boolean) objects.removeLast();
             if (cond) {
+                calls.add(new BreakPointer());
                 calls.add(() -> visitWhileStat(ctx));
+                calls.add(new ContinuePointer());
                 calls.add(() -> visitScopeStat(ctx.scopeStat()));
             }
         });
