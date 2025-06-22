@@ -7,7 +7,6 @@ import archit.common.Type.Kind;
 import archit.common.ArchitFunction;
 import archit.parser.ArchitParser;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.math.BigInteger;
@@ -154,6 +153,16 @@ public class EvaluationVisitor {
 
         if (ctx.functionCall() != null) {
             calls.add(() -> visitFunctionCall(ctx.functionCall()));
+            return;
+        }
+
+        if (ctx.listExpr() != null) {
+            calls.add(() -> visitListExpr(ctx.listExpr()));
+            return;
+        }
+
+        if (ctx.mapExpr() != null) {
+            calls.add(() -> visitMapExpr(ctx.mapExpr()));
             return;
         }
 
@@ -324,9 +333,9 @@ public class EvaluationVisitor {
     }
 
     public void visitListExpr(ArchitParser.ListExprContext ctx) {
+        int count = ctx.expr().size();
         //po wyliczeniu elementów tworzymy tą listę i dodajemy na stos objects
         calls.add(() -> {
-            int count = ctx.expr().size();
             List<Object> list = new ArrayList<>(count);
             for (int i = 0; i < count; i++) {
                 list.add(objects.removeLast());
@@ -345,7 +354,21 @@ public class EvaluationVisitor {
     }
 
     public void visitMapExpr(ArchitParser.MapExprContext ctx) {
-        // TODO
+        int count = ctx.expr().size() / 2;
+        calls.add(() -> {
+            Map<Object, Object> map = HashMap.newHashMap(count);
+            for (int i = 0; i < count; i++) {
+                Object value = objects.removeLast();
+                Object key = objects.removeLast();
+                map.put(key, value);
+            }
+            objects.add(map);
+        });
+
+        for (int i = ctx.expr().size() - 1; i >= 0; i--) {
+            var el = ctx.expr().get(i);
+            calls.add(() -> visitExpr(el));
+        }
     }
 
     public void visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {

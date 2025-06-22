@@ -133,7 +133,7 @@ public class ScriptRun {
         } catch (ScriptException e) {
             return false;
         } catch (RuntimeException e) {
-            interpreter.getLogger().systemError(e, "Unknown visitor exception caught!");
+            interpreter.getLogger().systemError(e, "Unknown type checking exception caught!");
             interpreter.getLogger().scriptError(this, "Unknown exception: {}", e.getMessage());
             return false;
         }
@@ -158,7 +158,17 @@ public class ScriptRun {
                 interpreter.getLogger().scriptDebug(this, "Function call: {}", fcdi);
                 return;
             }
-            call.get().run();
+            try {
+                call.get().run();
+            } catch (ScriptException e) {
+                stopExecution();
+                return;
+            } catch (RuntimeException e) {
+                interpreter.getLogger().systemError(e, "Unknown runtime exception caught!");
+                interpreter.getLogger().scriptError(this, "Unknown exception: {}", e.getMessage());
+                stopExecution();
+                return;
+            }
         } while (System.nanoTime() - start < TICK_LIMIT_NANOS);
     }
 
