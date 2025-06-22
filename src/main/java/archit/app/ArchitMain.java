@@ -23,10 +23,15 @@ public class ArchitMain {
     }
 
     public void run() {
-        interpreter.getStandardLibrary().registerNatives(new PlatformNatives());
+        PlatformNatives platform = new PlatformNatives();
+        interpreter.getStandardLibrary().registerNatives(platform);
         interpreter.getCurrentRuns().add(run);
         run.run();
         interpreter.getCurrentRuns().remove(run);
+
+        //eksportowanie do .obj
+        var scriptPath = run.getScriptLocation();
+        platform.exportToObj(scriptPath.getFileName().toString());
     }
 
     public static void main(String[] args) {
