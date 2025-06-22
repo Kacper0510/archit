@@ -4,15 +4,20 @@ import archit.common.visitors.EvaluationVisitor;
 import archit.common.visitors.TypeCheckingVisitor;
 import archit.parser.ArchitLexer;
 import archit.parser.ArchitParser;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 public class ScriptRun {
+    private static final long TICK_LIMIT_NANOS = 3_000_000;
+    private static final DateTimeFormatter START_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+
     /**
      * Metadata of the current run - its additional implementation specific details.
      * In Minecraft mode - {@link net.minecraft.server.command.ServerCommandSource},
@@ -23,30 +28,51 @@ public class ScriptRun {
     private final Path scriptLocation;
     private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
                                                         // chyba ze wywoływane z konsoli to domyslnie 0
+    private EvaluationVisitor visitor;
+    private final LocalTime startTime = LocalTime.now();
+    private Optional<Integer> animationSpeed = Optional.empty();  // animation speed in ticks, if applicable
+    private long ticks = -1;
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
+    }
 
-        if (metadata instanceof net.minecraft.server.command.ServerCommandSource source) {
-            var pos = source.getPosition();  // pozycja gracza bo to on wpisuje komende
-            this.cursorX = (int) pos.x;
-            this.cursorY = (int) pos.y;
-            this.cursorZ = (int) pos.z - 1;
-        }
+    public ScriptRun(Interpreter i, Path f, Object m, int animationSpeed) {
+        this(i, f, m);
+        this.animationSpeed = Optional.of(animationSpeed);
+    }
+
+    @Override
+    public String toString() {
+        return scriptLocation.getFileName().toString() + "@" + START_FORMATTER.format(startTime);
     }
 
     // getter i setter dla wirtualnego kursora
     public void setCursor(int x, int y, int z) {
-        this.cursorX = x; this.cursorY = y; this.cursorZ = z;
+        this.cursorX = x;
+        this.cursorY = y;
+        this.cursorZ = z;
     }
+
     public void moveCursor(int x, int y, int z) {
-        this.cursorX += x; this.cursorY += y; this.cursorZ += z;
+        this.cursorX += x;
+        this.cursorY += y;
+        this.cursorZ += z;
     }
-    public int getCursorX() { return cursorX; }
-    public int getCursorY() { return cursorY; }
-    public int getCursorZ() { return cursorZ; }
+
+    public int getCursorX() {
+        return cursorX;
+    }
+
+    public int getCursorY() {
+        return cursorY;
+    }
+
+    public int getCursorZ() {
+        return cursorZ;
+    }
 
     public ScriptRun(Interpreter interpreter, Path file) {
         this(interpreter, file, null);
@@ -67,7 +93,7 @@ public class ScriptRun {
     /**
      * @return true if run was successful, false if there were any errors
      */
-    public boolean run() {
+    public boolean startExecution() {
         if (!Files.exists(scriptLocation)) {
             interpreter.getLogger().scriptError(this, "Script file does not exist!");
             return false;
@@ -101,20 +127,53 @@ public class ScriptRun {
             // stworzenie visitora i uruchomienie
             var typeChecker = new TypeCheckingVisitor(this);
             typeChecker.visit(tree);
-
-            var eval = new EvaluationVisitor(this, typeChecker.getTables());
-            eval.calls.add(() -> eval.visitProgram(tree));
-            while (!eval.calls.isEmpty()) {
-                eval.calls.removeLast().run();
-            }
+            visitor = new EvaluationVisitor(this, typeChecker.getTables(), tree);
+            interpreter.getCurrentRuns().add(this);
+            interpreter.getLogger().scriptDebug(this, "Script started: {}", toString());
         } catch (ScriptException e) {
             return false;
         } catch (RuntimeException e) {
-            interpreter.getLogger().systemError(e, "Unknown visitor exception caught!");
+            interpreter.getLogger().systemError(e, "Unknown type checking exception caught!");
             interpreter.getLogger().scriptError(this, "Unknown exception: {}", e.getMessage());
             return false;
         }
 
         return true;
+    }
+
+    public void runNextTick() {
+        ticks++;
+        if (animationSpeed.isPresent() && ticks % animationSpeed.get() != 0) {
+            return;
+        }
+
+        var start = System.nanoTime();
+        do {
+            var call = visitor.getNextCall();
+            if (call.isEmpty()) {
+                stopExecution();
+                return;
+            } else if (animationSpeed.isPresent()
+                       && call.get() instanceof EvaluationVisitor.FunctionCallDebugInfo fcdi) {
+                interpreter.getLogger().scriptDebug(this, "Function call: {}", fcdi);
+                return;
+            }
+            try {
+                call.get().run();
+            } catch (ScriptException e) {
+                stopExecution();
+                return;
+            } catch (RuntimeException e) {
+                interpreter.getLogger().systemError(e, "Unknown runtime exception caught!");
+                interpreter.getLogger().scriptError(this, "Unknown exception: {}", e.getMessage());
+                stopExecution();
+                return;
+            }
+        } while (System.nanoTime() - start < TICK_LIMIT_NANOS);
+    }
+
+    public void stopExecution() {
+        interpreter.getCurrentRuns().remove(this);
+        interpreter.getLogger().scriptDebug(this, "Script stopped: {}", toString());
     }
 }

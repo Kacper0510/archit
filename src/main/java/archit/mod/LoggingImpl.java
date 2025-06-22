@@ -48,4 +48,20 @@ public class LoggingImpl implements Logging {
         }
         ((ServerCommandSource) run.getMetadata()).sendFeedback(() -> text, false);
     }
+
+    @Override
+    public void scriptDebug(ScriptRun run, String format, Object... objects) {
+        MutableText text = Text.literal(PROMPT).formatted(INFO_COLOR);
+        var strings = parseFormatAndSubstitute(format, objects);
+        for (int i = 0; i < strings.size(); i++) {
+            var color = (i % 2 == 0) ? INFO_COLOR : PARAM_COLOR;
+            text.append(Text.literal(strings.get(i)).formatted(color));
+        }
+        var cs = (ServerCommandSource) run.getMetadata();
+        if (cs.getPlayer() != null) {
+            cs.getPlayer().sendMessage(text, true);
+        } else {
+            cs.sendFeedback(() -> text, false);
+        }
+    }
 }

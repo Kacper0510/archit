@@ -3,13 +3,17 @@ package archit.common.visitors;
 import archit.common.Material;
 import archit.common.ScriptException;
 import archit.common.ScriptRun;
+import archit.common.Type.Kind;
 import archit.common.ArchitFunction;
 import archit.parser.ArchitParser;
+
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.math.BigInteger;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class EvaluationVisitor {
     private final ScriptRun run;
@@ -19,13 +23,18 @@ public class EvaluationVisitor {
 
     //stosy
     private final List<Map<Integer, Object>> variables = new ArrayList<>();
-    public final List<Runnable> calls = new ArrayList<>();
+    private final List<Runnable> calls = new ArrayList<>();
     private final List<Object> objects = new ArrayList<>();
 
-    public EvaluationVisitor(ScriptRun run, InfoTables tables) {
+    public EvaluationVisitor(ScriptRun run, InfoTables tables, ArchitParser.ProgramContext tree) {
         this.run = run;
         this.tables = tables;
         this.variables.add(new HashMap<>());
+        this.calls.add(() -> visitProgram(tree));
+    }
+
+    public Optional<Runnable> getNextCall() {
+        return calls.isEmpty() ? Optional.empty() : Optional.of(calls.removeLast());
     }
 
     private void putVariable(int id, Object value) {
@@ -147,6 +156,16 @@ public class EvaluationVisitor {
             return;
         }
 
+        if (ctx.listExpr() != null) {
+            calls.add(() -> visitListExpr(ctx.listExpr()));
+            return;
+        }
+
+        if (ctx.mapExpr() != null) {
+            calls.add(() -> visitMapExpr(ctx.mapExpr()));
+            return;
+        }
+
         //operator
         Operators op = tables.getOperators().get(ctx);
 
@@ -189,6 +208,28 @@ public class EvaluationVisitor {
         }
     }
 
+    public record FunctionCallDebugInfo(ArchitFunction function, Object[] values) implements Runnable {  //NOSONAR
+        @Override
+        public void run() {}
+
+        @Override
+        public String toString() {
+            var sb = new StringBuilder();
+            sb.append(function.name());
+            sb.append("(");
+            var params = IntStream.range(0, values.length).mapToObj(i -> {
+                var type = function.params()[i];
+                if (type.getKind() == Kind.SIMPLE) {
+                    return type.toStringObject(values[i]);
+                }
+                return "...";
+            }).collect(Collectors.joining(", "));
+            sb.append(params);
+            sb.append(")");
+            return sb.toString();
+        }
+    }
+
     public void visitReturnStat(ArchitParser.ReturnStatContext ctx) {
         calls.add(() -> {
             Runnable last = null;
@@ -213,7 +254,8 @@ public class EvaluationVisitor {
             for (int i = n - 1; i >= 0; i--) {
                 args[i] = objects.removeLast();
             }
-
+            
+            calls.add(new FunctionCallDebugInfo(function, args));
             if (function.isNative()) {
                 // kolejno: scriptRun, lista argumentów, typ zwracany
                 var impl = (BiFunction<ScriptRun, Object[], Object>) function.callInfo();
@@ -291,9 +333,9 @@ public class EvaluationVisitor {
     }
 
     public void visitListExpr(ArchitParser.ListExprContext ctx) {
+        int count = ctx.expr().size();
         //po wyliczeniu elementów tworzymy tą listę i dodajemy na stos objects
         calls.add(() -> {
-            int count = ctx.expr().size();
             List<Object> list = new ArrayList<>(count);
             for (int i = 0; i < count; i++) {
                 list.add(objects.removeLast());
@@ -312,7 +354,21 @@ public class EvaluationVisitor {
     }
 
     public void visitMapExpr(ArchitParser.MapExprContext ctx) {
-        // TODO
+        int count = ctx.expr().size() / 2;
+        calls.add(() -> {
+            Map<Object, Object> map = HashMap.newHashMap(count);
+            for (int i = 0; i < count; i++) {
+                Object value = objects.removeLast();
+                Object key = objects.removeLast();
+                map.put(key, value);
+            }
+            objects.add(map);
+        });
+
+        for (int i = ctx.expr().size() - 1; i >= 0; i--) {
+            var el = ctx.expr().get(i);
+            calls.add(() -> visitExpr(el));
+        }
     }
 
     public void visitMaterialExpr(ArchitParser.MaterialExprContext ctx) {

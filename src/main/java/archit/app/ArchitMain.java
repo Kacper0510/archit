@@ -22,9 +22,10 @@ public class ArchitMain {
 
     public void run() {
         interpreter.getStandardLibrary().registerNatives(new PlatformNatives());
-        interpreter.getCurrentRuns().add(run);
-        run.run();
-        interpreter.getCurrentRuns().remove(run);
+        run.startExecution();
+        while (!interpreter.getCurrentRuns().isEmpty()) {
+            run.runNextTick();
+        }
     }
 
     public static void main(String[] args) {
