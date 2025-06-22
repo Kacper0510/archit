@@ -48,6 +48,47 @@ $ cd archit
 $ ./gradlew run --args="<ścieżka do pliku wejściowego>"
 ```  
 
+### Aby zarządzać skryptami z poziomu gry minecraft, dostępne są trzy podstawowe komendy:
+```
+archit run <skrypt> [argumenty]
+```
+Uruchamia podany skrypt. Plik skryptu może przyjmować opcjonalne argumenty,
+które przekażesz po nazwie pliku.
+
+Przykład:
+archit run budowla.arch x y z
+
+```
+archit stop <id_uruchomienia>
+```
+Zatrzymuje wykonywanie konkretnego procesu skryptu, 
+identyfikowanego numerem przydzielonym przy uruchomieniu. 
+Użyj tej komendy, gdy chcesz przerwać długotrwałe lub niepotrzebne 
+uruchomienie.
+
+Przykład:
+archit stop test.archit@12:23:32
+(zaimplementowane są również podpowiedzi w grze w celu łatwiejszego użycia tego skryptu, więc godzina jak i nazwa skryptu będzie wyświetlana użytkownikowi)
+
+```
+archit animate <czas_na_wywołanie_funkcji> <skrypt> [argumenty]
+```
+Wyświetla animację działania skryptu w czasie rzeczywistym,
+pauzując się na określony czas (w milisekundach) 
+po każdym wywołaniu funkcji z biblioteki (np. place, move). 
+Argumenty skryptu są opcjonalne. Dzięki animacji możesz zobaczyć 
+krok po kroku powstawanie struktury.
+
+Przykład:
+archit animate 200 generator.archit 10 20 30
+
+W powyższym przykładzie każdy krok wywołania funkcji będzie opóźniony o 200 ms, a do skryptu zostaną przekazane trzy argumenty.
+
+Dzięki tym trzem komendom możesz w prosty sposób uruchamiać, zatrzymywać i wizualizować swoje skrypty archit.
+
+### Aby używać skryptów w grze minecraft
+należy stworzyć folder archit-scripts w folderze .minecraft i następnie dodać tam swoje skrypty
+
 # Zastosowanie języka
 ### archit to własny język skryptowy zaprojektowany do:
 - generowania budowli i struktur w świecie Minecrafta
