@@ -3,6 +3,7 @@ package archit.common.visitors;
 import archit.common.*;
 import archit.parser.ArchitParser;
 import archit.parser.ArchitParserBaseVisitor;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -59,6 +60,12 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             throw new ScriptException(run, LOGIC_ERROR, ctx, "Return statement not inside a function");
         }
         Type declaredReturn = func.type() == null ? null : visit(func.type());
+        if (returnType.equals(Type.emptyList) && declaredReturn.asListType() != null) {
+            returnType = declaredReturn;
+        } else if (returnType.equals(Type.emptyMap) && declaredReturn.asMapType() != null) {
+            returnType = declaredReturn;
+        }
+
         if (!Objects.equals(declaredReturn, returnType)) {
             throw new ScriptException(
                 run, TYPE_ERROR, ctx, "Return type mismatch: expected {}, found {}", declaredReturn, returnType
@@ -73,6 +80,12 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         Type declared = visit(ctx.type());
         // check initializer
         Type init = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
+        if (init.equals(Type.emptyList) && declared.asListType() != null) {
+            init = declared;
+        } else if (init.equals(Type.emptyMap) && declared.asMapType() != null) {
+            init = declared;
+        }
+
         if (!Objects.equals(init, declared)) {
             throw new ScriptException(
                 run, TYPE_ERROR, ctx, "Cannot assign {} to variable '{}' of type {}", init, name, declared
@@ -99,6 +112,12 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
 
         Type lhs = varRes.type();
         Type rhs = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
+        if (rhs.equals(Type.emptyList) && lhs.asListType() != null) {
+            rhs = lhs;
+        } else if (rhs.equals(Type.emptyMap) && lhs.asMapType() != null) {
+            rhs = lhs;
+        }
+
         tables.addSymbolMapping(ctx.symbol(), varRes.id());
         String op = ctx.op.getText();
         switch (op) {
@@ -271,6 +290,14 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     public Type visitFunctionCall(ArchitParser.FunctionCallContext ctx) {
         String name = ctx.ID().getText();
         Type[] at = ctx.expr().stream().map(this::visit).toArray(Type[] ::new);
+        if (Arrays.stream(at).anyMatch(t -> t.getKind() == Type.Kind.PSEUDO)) {
+            throw new ScriptException(
+                run,
+                TYPE_ERROR,
+                ctx,
+                "Empty collections not allowed in function calls, to use them, assign them to a variable first"
+            );
+        }
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
             throw new ScriptException(
@@ -290,6 +317,14 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     public Type visitFunctionCallNoBrackets(ArchitParser.FunctionCallNoBracketsContext ctx) {
         String name = ctx.ID().getText();
         Type[] at = ctx.expr().stream().map(this::visit).toArray(Type[] ::new);
+        if (Arrays.stream(at).anyMatch(t -> t.getKind() == Type.Kind.PSEUDO)) {
+            throw new ScriptException(
+                run,
+                TYPE_ERROR,
+                ctx,
+                "Empty collections not allowed in function calls, to use them, assign them to a variable first"
+            );
+        }
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
             throw new ScriptException(
@@ -326,6 +361,14 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         if ((ctx.op != null && (ctx.op.getText().equals("-") || ctx.op.getText().equals("not")))
             && ctx.expr().size() == 1) {
             Type t = visit(ctx.expr(0));
+            if (t.getKind() == Type.Kind.PSEUDO) {
+                throw new ScriptException(
+                    run,
+                    TYPE_ERROR,
+                    ctx,
+                    "Empty collections not allowed in expressions, to use them, assign them to a variable first"
+                );
+            }
             if (ctx.op.getText().equals("-")) {
                 if (t.equals(Type.number)) {
                     tables.addOperatorMapping(ctx, Operators.NEGATE_NUMBER);
@@ -348,6 +391,14 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         if (ctx.expr().size() == 2 && ctx.op != null) {
             Type left = visit(ctx.expr(0));
             Type right = visit(ctx.expr(1));
+            if (left.getKind() == Type.Kind.PSEUDO || right.getKind() == Type.Kind.PSEUDO) {
+                throw new ScriptException(
+                    run,
+                    TYPE_ERROR,
+                    ctx,
+                    "Empty collections not allowed in expressions, to use them, assign them to a variable first"
+                );
+            }
             String o = ctx.op.getText();
             switch (o) {
                 case "+":
@@ -509,49 +560,67 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     }
 
     @Override
+    public Type visitInterpolation(ArchitParser.InterpolationContext ctx) {
+        for (ArchitParser.ExprContext expr : ctx.expr()) {
+            Type t = visit(expr);
+            if (t.getKind() != Type.Kind.SIMPLE) {
+                throw new ScriptException(run, TYPE_ERROR, expr, "Only simple types can be interpolated, found {}", t);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Type visitListExpr(ArchitParser.ListExprContext ctx) {
         List<Type> elems = ctx.expr().stream().map(this::visit).toList();
         if (ctx.getText().startsWith("#")) {
             return Type.list(Type.material);
-        } else {
-            if (elems.isEmpty()) {
-                throw new ScriptException(
-                    run, LOGIC_ERROR, ctx, "Cannot infer element type of empty list"
-                );  // TODO: allow empty list
-            }
-            Type head = elems.get(0);
-            for (Type t : elems) {
-                if (!t.equals(head)) {
-                    throw new ScriptException(
-                        run, TYPE_ERROR, ctx, "List elements must all have same type, found {} and {}", head, t
-                    );
-                }
-            }
-            return Type.list(head);
         }
+        List<Type> nonPseudoElems = elems.stream().filter(t -> t.getKind() != Type.Kind.PSEUDO).toList();
+        if (nonPseudoElems.isEmpty()) {
+            return Type.emptyList;
+        }
+        Type head = nonPseudoElems.get(0);
+        for (Type t : elems) {
+            if (!t.equals(head)) {
+                throw new ScriptException(
+                    run, TYPE_ERROR, ctx, "List elements must all have same type, found {} and {}", head, t
+                );
+            }
+        }
+        return Type.list(head);
     }
 
     @Override
     public Type visitMapExpr(ArchitParser.MapExprContext ctx) {
-        var pairs = ctx.expr();
-        if (pairs.isEmpty()) return Type.map(Type.number, Type.number);
-        Type key0 = visit(pairs.get(0)), val0 = visit(pairs.get(1));
-        for (int i = 2; i < pairs.size(); i += 2) {
-            Type k = visit(pairs.get(i)), v = visit(pairs.get(i + 1));
-            if (!k.equals(key0) || !v.equals(val0)) {
+        List<Type> keys = new ArrayList<>();
+        List<Type> values = new ArrayList<>();
+        for (int i = 0; i < ctx.expr().size(); i += 2) {
+            keys.add(visit(ctx.expr().get(i)));
+            values.add(visit(ctx.expr().get(i + 1)));
+        }
+        var nonPseudoKeys = keys.stream().filter(t -> t.getKind() != Type.Kind.PSEUDO).toList();
+        var nonPseudoValues = values.stream().filter(t -> t.getKind() != Type.Kind.PSEUDO).toList();
+        if (nonPseudoKeys.isEmpty() || nonPseudoValues.isEmpty()) {
+            return Type.emptyMap;
+        }
+        Type keyType = nonPseudoKeys.get(0);
+        Type valueType = nonPseudoValues.get(0);
+        for (Type t : keys) {
+            if (!t.equals(keyType)) {
                 throw new ScriptException(
-                    run,
-                    TYPE_ERROR,
-                    ctx,
-                    "Inconsistent map element types: expected ({}, {}), found ({}, {})",
-                    key0,
-                    val0,
-                    k,
-                    v
+                    run, TYPE_ERROR, ctx, "Map keys must all have same type, found {} and {}", keyType, t
                 );
             }
         }
-        return Type.map(key0, val0);
+        for (Type t : values) {
+            if (!t.equals(valueType)) {
+                throw new ScriptException(
+                    run, TYPE_ERROR, ctx, "Map values must all have same type, found {} and {}", valueType, t
+                );
+            }
+        }
+        return Type.map(keyType, valueType);
     }
 
     @Override

@@ -8,15 +8,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class Type {
     private final String name;
     private final Class<?> equivalent;
+    private final Kind kind;
+
+    public enum Kind {
+        SIMPLE, COMPLEX, PSEUDO
+    }
 
     private Type(String name, Class<?> equivalent) {
+        this(name, equivalent, Kind.SIMPLE);
+    }
+
+    private Type(String name, Class<?> equivalent, Kind kind) {
         this.name = name;
         this.equivalent = equivalent;
+        this.kind = kind;
     }
 
     public final String getBaseName() {
@@ -27,9 +38,17 @@ public class Type {
         return equivalent;
     }
 
+    public final Kind getKind() {
+        return kind;
+    }
+
     @Override
     public String toString() {
         return name;
+    }
+
+    public String toStringObject(Object o) {
+        return o.toString();
     }
 
     @Override
@@ -49,7 +68,7 @@ public class Type {
         private final Type elements;
 
         private ListType(Type elements) {
-            super("list", List.class);
+            super("list", List.class, Kind.COMPLEX);
             this.elements = elements;
         }
 
@@ -63,6 +82,12 @@ public class Type {
         }
 
         @Override
+        public String toStringObject(Object o) {
+            var list = (List<?>) o;
+            return "[" + list.stream().map(elements::toStringObject).collect(Collectors.joining(", ")) + "]";
+        }
+
+        @Override
         public ListType asListType() {
             return this;
         }
@@ -73,7 +98,7 @@ public class Type {
         private final Type value;
 
         private MapType(Type key, Type value) {
-            super("map", Map.class);
+            super("map", Map.class, Kind.COMPLEX);
             this.key = key;
             this.value = value;
         }
@@ -95,6 +120,17 @@ public class Type {
             sb.append(value);
             sb.append('|');
             return sb.toString();
+        }
+
+        @Override
+        public String toStringObject(Object o) {
+            var map = (Map<?, ?>) o;
+            return "|"
+                + map.entrySet()
+                      .stream()
+                      .map(e -> key.toStringObject(e.getKey()) + " -> " + value.toStringObject(e.getValue()))
+                      .collect(Collectors.joining(", "))
+                + "|";
         }
 
         @Override
@@ -125,6 +161,11 @@ public class Type {
         }
 
         @Override
+        public String toStringObject(Object o) {
+            return "$" + o.toString();
+        }
+
+        @Override
         public boolean equals(Object o) {
             return o instanceof LiteralType;
         }
@@ -140,6 +181,18 @@ public class Type {
     public static final Type logic = new Type("logic", Boolean.class);
     public static final Type string = new Type("string", String.class);
     public static final Type material = new Type("material", Material.class);
+    public static final Type emptyList = new Type("[?]", List.class, Kind.PSEUDO) {
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof ListType;
+        }
+    };
+    public static final Type emptyMap = new Type("|?|", Map.class, Kind.PSEUDO) {
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof MapType;
+        }
+    };
 
     public static Type list(Type elements) {
         return new ListType(elements);

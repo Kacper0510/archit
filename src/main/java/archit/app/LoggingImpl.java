@@ -92,4 +92,9 @@ public class LoggingImpl implements Logging {
         }
         System.out.print(ansi().a('\n').reset());
     }
+
+    @Override
+    public void scriptDebug(ScriptRun run, String format, Object... objects) {
+        systemInfo(format, objects);
+    }
 }

@@ -36,9 +36,10 @@ public class ArchitMain {
 
         this.run = new ScriptRun(interpreter, run.getScriptLocation(), map, run.getArgs());
 
-        interpreter.getCurrentRuns().add(run);
-        boolean success = run.run();
-        interpreter.getCurrentRuns().remove(run);
+        boolean success = run.startExecution();
+        while (!interpreter.getCurrentRuns().isEmpty()) {
+            run.runNextTick();
+        }
 
         if (success) {
             exportToObj();
