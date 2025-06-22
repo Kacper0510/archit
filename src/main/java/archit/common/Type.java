@@ -14,15 +14,20 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class Type {
     private final String name;
     private final Class<?> equivalent;
-    protected Kind kind = Kind.SIMPLE;
+    private final Kind kind;
 
     public enum Kind {
         SIMPLE, COMPLEX, PSEUDO
     }
 
     private Type(String name, Class<?> equivalent) {
+        this(name, equivalent, Kind.SIMPLE);
+    }
+
+    private Type(String name, Class<?> equivalent, Kind kind) {
         this.name = name;
         this.equivalent = equivalent;
+        this.kind = kind;
     }
 
     public final String getBaseName() {
@@ -63,8 +68,7 @@ public class Type {
         private final Type elements;
 
         private ListType(Type elements) {
-            super("list", List.class);
-            this.kind = Kind.COMPLEX;
+            super("list", List.class, Kind.COMPLEX);
             this.elements = elements;
         }
 
@@ -94,8 +98,7 @@ public class Type {
         private final Type value;
 
         private MapType(Type key, Type value) {
-            super("map", Map.class);
-            this.kind = Kind.COMPLEX;
+            super("map", Map.class, Kind.COMPLEX);
             this.key = key;
             this.value = value;
         }
@@ -178,6 +181,18 @@ public class Type {
     public static final Type logic = new Type("logic", Boolean.class);
     public static final Type string = new Type("string", String.class);
     public static final Type material = new Type("material", Material.class);
+    public static final Type emptyList = new Type("[?]", List.class, Kind.PSEUDO) {
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof ListType;
+        }
+    };
+    public static final Type emptyMap = new Type("|?|", Map.class, Kind.PSEUDO) {
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof MapType;
+        }
+    };
 
     public static Type list(Type elements) {
         return new ListType(elements);
