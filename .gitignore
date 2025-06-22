@@ -40,4 +40,8 @@ replay_*.log
 *.hprof
 *.jfr
 logs/
+
+# other
+
 log.txt
+*.pdf

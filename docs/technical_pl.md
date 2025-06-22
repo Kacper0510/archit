@@ -202,15 +202,23 @@ Warto zwrócić uwagę na regułę `interpolation`, która obsługuje interpolac
 Projekt budowany jest przy użyciu Gradle - najpopularniejszego narzędzia do automatyzacji budowy projektów w Javie. Jest to wymuszone m.in. przez konieczność budowania modyfikacji do Minecrafta, która wymaga specjalnych zależności i konfiguracji.
 
 W pliku `build.gradle` znajdują się wszystkie niezbędne zależności, konfiguracje i zadania do budowy projektu. Oto kluczowe szczegóły:
+
 - **Zależności**: Projekt korzysta z wielu bibliotek, w tym Antlr4 do parsowania języka, Fabric API do integracji z Minecraftem oraz bibliotek do obsługi kolorów ANSI w terminalu i eksportu modeli 3D do formatu `.obj`.
+
 - **Zadania**: Zdefiniowane są zadania do budowy projektu, uruchamiania klienta Minecrafta lub wersji terminalowej - dostarczają je różne pluginy Gradle'a. Utworzono również własne zadania automatyzujące kopiowanie przykładów przy uruchamianiu gry oraz poprawiania struktury plików generowanych przez Antlr4, aby różne IDE mogły poprawnie rozpoznać wszelkie wygenerowane klasy.
+
 - **Shadow JAR**: Projekt korzysta z własnej implementacji podobnej do Maven Shade lub tzw. "fat JAR", która pozwala na spakowanie wszystkich zależności do jednego pliku JAR. Jest to przydatne w przypadku uruchamiania programu jako samodzielnej aplikacji, gdzie wszystkie zależności muszą być zawarte w jednym pliku. Jednocześnie, ten sam plik JAR może być używany jako mod do Minecrafta, gdzie zależności są dostarczane przez Fabric API.
 
 Kluczowe zadania w Gradle:
+
 - `runClient`: Uruchamia klienta Minecrafta z wczytaną modyfikacją.
+
 - `runServer`: Uruchamia serwer Minecrafta z wczytaną modyfikacją.
+
 - `run`: Uruchamia program jako samodzielną aplikację.
+
 - `build`: Buduje projekt, tworząc plik JAR z wszystkimi zależnościami.
+
 - `generateGrammarSource`: Generuje klasy parsera i leksera na podstawie gramatyki Antlr4 - zazwyczaj uruchamiane jedynie jako dependencja `build`.
 
 ## Przebiegi interpretera
@@ -226,6 +234,7 @@ Główne elementy przebiegu interpretera:
 Odpowiada za sprawdzanie typów w kodzie źródłowym. Wykonuje analizę semantyczną, aby upewnić się, że wszystkie operacje są zgodne z typami danych i dozwolone w danym kontekście. Wykrywa błędy takie jak niezgodność typów, brakujące deklaracje zmiennych czy nieprawidłowe wywołania funkcji.
 
 Struktura typów (szczególnie tych złożonych) jest drzewiasta, co ilustruje poniższy diagram:
+
 ![Diagram typów](img/type_diagram.png)
 
 Ważną cechą tego etapu jest także generowanie tablic symboli (klasa `InfoTables`), które przechowują informacje o zmiennych, funkcjach i rodzajach operatorów. Tablice te są wykorzystywane w kolejnych etapach interpretacji.
@@ -245,8 +254,11 @@ W związku z tymi ograniczeniami, `EvaluationVisitor` posiada własną kolejkę 
 Aktualna implementacja zezwala na wykorzystanie $3 \, \text{ms}$ na jedno uruchomienie danego skryptu na jeden 'tick' gry (których jest 20 w ciągu sekundy przy normalnym działaniu gry), a także daje graczowi szansę na przerwanie wykonywania skryptu odpowiednim poleceniem w konsoli.
 
 `EvaluationVisitor` posiada trzy stosy:
+
 1. **Stos wywołań** - przechowuje aktualnie wykonywane części kodu (nie tylko funkcje, jak to bywa w większości języków programowania), opisany powyżej.
+
 2. **Stos obiektów** - przechowuje obiekty w użyciu, m.in. pośrednie wyniki ewaluacji wyrażeń, parametrów funkcji, interpolacji, etc.
+
 3. **Stos zmiennych** - przechowuje zmienne w użyciu, z uwzględnieniem zasięgów, lecz tylko tych wynikających z wywołań funkcji na potrzeby rekurencji. Więcej informacji w sekcji poniżej.
 
 Czysto teoretycznie, powyższe stosy mogłyby być zrealizowane jako jedna struktura danych, jednakże w praktyce takie podejście okazało się nieefektywne i skomplikowane. Dlatego zdecydowano się na rozdzielenie ich, co pozwala na lepszą organizację kodu i łatwiejsze zarządzanie typami w Javie.
@@ -268,8 +280,11 @@ W tym miejscu składowane są wszelkie informacje potrzebne do działania sprawd
 ### `InfoTables`
 
 Tablice w klasie `InfoTables` są przekazywane jako efekt działania `TypeCheckingVisitor` do `EvaluationVisitor` i składowane jako `HashMap`:
+
 - **Mapa symboli na identyfikatory** - przechowuje lokacje w skrypcie wszelkich użyć zmiennych i przypisane im unikatowe identyfikatory liczbowe, które są używane do szybkiego dostępu do zmiennych w trakcie ewaluacji i generowane przy każdej deklaracji.
+
 - **Mapa wywołań funkcji na informacje o nich** - dla każdego napotkanego wywołania funkcji, przechowywana jest referencja do obiektu informacji o tej funkcji zawierającego nazwę, typ zwracany, parametry i ich typy, a także lokalizację w kodzie źródłowym.
+
 - **Mapa niektórych wyrażeń na typ operatora** - przechowuje informacje o operatorach użytych w wyrażeniach, co jest przydatne do sprawdzania poprawności typów i łatwego dostępu do implementacji danego operatora w trakcie ewaluacji. 
 
 ![Diagram ważnych struktur danych](img/imp_struct_diagram.png)
@@ -285,7 +300,9 @@ W języku `archit` nie istnieją typowe rekordy aktywacji funkcji, cała funkcjo
 ## Ciekawsze aspekty implementacji
 
 - Interpolacja ciągów znaków przez specjalny tryb leksera, który pozwala na dynamiczne wstawianie wartości do tekstu.
+
 - Zastosowanie `BigInteger` do reprezentacji liczb całkowitych, co pozwala na obsługę bardzo dużych wartości bez utraty precyzji.
+
 - Obsługa funkcji natywnych, które są implementowane w Javie i mogą być wywoływane z poziomu skryptu za pomocą mechanizmu refleksji.
     
     Przykład:
@@ -300,6 +317,9 @@ W języku `archit` nie istnieją typowe rekordy aktywacji funkcji, cała funkcjo
     Należy zwrócić uwagę na zgodność deklaracji w języku `archit` z deklaracją w Javie - typy muszą być zgodne. W przeciwnym razie, funkcja nie będzie dostępna w skrypcie.
 
 - Nadbudowanie funkcji dynamicznych nad funkcjami natywnymi w Javie, co jest dozwolone tylko w tym kontekście, a w kontekście użytkownika już nie. Pozwala to m.in. na stworzenie w standardowej bibliotece funkcji dotyczących różnych rodzajów list bądź map albo na przekazanie dowolnego typu do funkcji `print` bez zaburzania silnego typowania.
+
 - Modularyzacja kodu w związku z koniecznością obsługi środowiska Minecrafta oraz środowiska terminalowego. Wymaga to jedynie implementacji kilku interfejsów w obu środowiskach, a reszta kodu jest wspólna i działa w obu przypadkach.
+
 - Animacje działania skryptu i przerywanie w dowolnym momencie, nadbudowane na specyficznej implementacji `EvaluationVisitor`.
+
 - Automatyzacja budowy projektu razem z generacją kodu Antlr4 przy użyciu Gradle oraz GitHub Actions.
