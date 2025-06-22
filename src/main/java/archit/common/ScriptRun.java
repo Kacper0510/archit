@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.Random;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -26,21 +27,23 @@ public class ScriptRun {
     private final Object metadata;
     private final Interpreter interpreter;
     private final Path scriptLocation;
-    private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
-                                                        // chyba ze wywoływane z konsoli to domyslnie 0
+    private String args = "";
+    private int cursorX = 0, cursorY = 0, cursorZ = 0;
+    private Random random = new Random();
     private EvaluationVisitor visitor;
     private final LocalTime startTime = LocalTime.now();
     private Optional<Integer> animationSpeed = Optional.empty();  // animation speed in ticks, if applicable
     private long ticks = -1;
 
-    public ScriptRun(Interpreter interpreter, Path file, Object metadata) {
+    public ScriptRun(Interpreter interpreter, Path file, Object metadata, String args) {
         this.interpreter = interpreter;
         this.metadata = metadata;
         this.scriptLocation = file;
+        this.args = args != null ? args : "";
     }
 
-    public ScriptRun(Interpreter i, Path f, Object m, int animationSpeed) {
-        this(i, f, m);
+    public ScriptRun(Interpreter i, Path f, Object m, String a, int animationSpeed) {
+        this(i, f, m, a);
         this.animationSpeed = Optional.of(animationSpeed);
     }
 
@@ -74,8 +77,16 @@ public class ScriptRun {
         return cursorZ;
     }
 
+    public Random getRandom() {
+        return random;
+    }
+
+    public String getArgs() {
+        return args;
+    }
+
     public ScriptRun(Interpreter interpreter, Path file) {
-        this(interpreter, file, null);
+        this(interpreter, file, null, "");
     }
 
     public Object getMetadata() {

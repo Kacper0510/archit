@@ -100,12 +100,34 @@ public class EvaluationVisitor {
         }
     }
 
+    private class ContinuePointer implements Runnable {
+        @Override
+        public void run() {}
+    }
+
+    private class BreakPointer implements Runnable {
+        @Override
+        public void run() {}
+    }
+
     public void visitBreakStat(ArchitParser.BreakStatContext ctx) {
-        // TODO
+        calls.add(() -> {
+            Runnable last = null;
+            while (!(last instanceof BreakPointer)) {
+                last = calls.removeLast();
+            }
+            last.run();
+        });
     }
 
     public void visitContinueStat(ArchitParser.ContinueStatContext ctx) {
-        // TODO
+        calls.add(() -> {
+            Runnable last = null;
+            while (!(last instanceof ContinuePointer)) {
+                last = calls.removeLast();
+            }
+            last.run();
+        });
     }
 
     public void visitExpr(ArchitParser.ExprContext ctx) {
@@ -455,15 +477,10 @@ public class EvaluationVisitor {
 
     public void visitRepeatStat(ArchitParser.RepeatStatContext ctx) {
 
-        calls.add(() -> {
-            var howMany = (BigInteger) objects.removeLast();
-            for (long i = 0; i < howMany.longValue(); i++) {
-                calls.add(() -> {
-                    visitScopeStat(ctx.scopeStat());
-                });
-            }
+        calls.add(() ->{
+            BigInteger iter = (BigInteger) objects.removeLast();
+            visitRepeatStat(ctx, iter.intValue());
         });
-
 
         //obliczanie wyrażenia
         calls.add(() -> {
@@ -472,6 +489,17 @@ public class EvaluationVisitor {
             }
             else{
                 visitFunctionCallNoBrackets(ctx.functionCallNoBrackets());
+            }
+        });
+    }
+
+    public void visitRepeatStat(ArchitParser.RepeatStatContext ctx, int iter) {
+        calls.add(() -> {
+            if (iter > 0) {
+                calls.add(new BreakPointer());
+                calls.add(() -> visitRepeatStat(ctx, iter - 1));
+                calls.add(new ContinuePointer());
+                calls.add(() -> visitScopeStat(ctx.scopeStat()));
             }
         });
     }
@@ -507,7 +535,9 @@ public class EvaluationVisitor {
         calls.add(() -> {
             Boolean cond = (Boolean) objects.removeLast();
             if (cond) {
+                calls.add(new BreakPointer());
                 calls.add(() -> visitWhileStat(ctx));
+                calls.add(new ContinuePointer());
                 calls.add(() -> visitScopeStat(ctx.scopeStat()));
             }
         });

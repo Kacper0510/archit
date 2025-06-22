@@ -42,8 +42,19 @@ public class ArchitMod implements ModInitializer {
                             .suggests(new ScriptPathSuggestions(this))
                             .executes(
                                 context
-                                -> runScript(context.getSource(), StringArgumentType.getString(context, "script_name"))
+                                -> runScript(
+                                    context.getSource(), StringArgumentType.getString(context, "script_name"), ""
+                                )
                             )
+                            .then(CommandManager.argument("args", StringArgumentType.greedyString())
+                                .executes(
+                                    context
+                                    -> runScript(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "script_name"),
+                                        StringArgumentType.getString(context, "args")
+                                    )
+                                ))
                     ))
                     .then(CommandManager.literal("stop").then(
                         CommandManager.argument("run_id", StringArgumentType.greedyString())
@@ -59,9 +70,20 @@ public class ArchitMod implements ModInitializer {
                                     -> runScript(
                                         context.getSource(),
                                         StringArgumentType.getString(context, "script_name"),
+                                        "",
                                         IntegerArgumentType.getInteger(context, "period")
                                     )
-                                ))
+                                )
+                                .then(CommandManager.argument("args", StringArgumentType.greedyString())
+                                    .executes(
+                                        context
+                                        -> runScript(
+                                            context.getSource(),
+                                            StringArgumentType.getString(context, "script_name"),
+                                            StringArgumentType.getString(context, "args"),
+                                            IntegerArgumentType.getInteger(context, "period")
+                                        )
+                                    )))
                     ))
             );
         });
@@ -69,18 +91,18 @@ public class ArchitMod implements ModInitializer {
         ServerTickEvents.END_WORLD_TICK.register(world -> onEachTick());
     }
 
-    private int runScript(ServerCommandSource source, String scriptName) {
+    private int runScript(ServerCommandSource source, String scriptName, String args) {
         Path scriptPath = scriptDirectory.resolve(scriptName);
-        var run = new ScriptRun(interpreter, scriptPath, source);
+        var run = new ScriptRun(interpreter, scriptPath, source, args);
         var pos = source.getPosition();
         run.setCursor((int) pos.x, (int) pos.y, (int) pos.z);
         boolean success = run.startExecution();
         return success ? 1 : 0;
     }
 
-    private int runScript(ServerCommandSource source, String scriptName, int animationSpeed) {
+    private int runScript(ServerCommandSource source, String scriptName, String args, int animationSpeed) {
         Path scriptPath = scriptDirectory.resolve(scriptName);
-        var run = new ScriptRun(interpreter, scriptPath, source, animationSpeed);
+        var run = new ScriptRun(interpreter, scriptPath, source, args, animationSpeed);
         var pos = source.getPosition();
         run.setCursor((int) pos.x, (int) pos.y, (int) pos.z);
         boolean success = run.startExecution();
