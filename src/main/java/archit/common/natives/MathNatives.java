@@ -53,7 +53,9 @@ public class MathNatives {
     public Double log(ScriptRun run, Double base, Double value) {return Math.log(value) / Math.log(base);}
 
     @ArchitNative("native log(base: number, value: number): real;")
-    public Double log(ScriptRun run, BigInteger base, BigInteger value) {return Math.log(value.doubleValue()) / Math.log(base.doubleValue());}
+    public Double log(ScriptRun run, BigInteger base, BigInteger value) {
+        return Math.log(value.doubleValue()) / Math.log(base.doubleValue());
+    }
 
     @ArchitNative("native sign(value: real): number;")
     public BigInteger sign(ScriptRun run, Double value) {return BigInteger.valueOf(Long.signum((long) Math.signum(value)));}
@@ -61,9 +63,29 @@ public class MathNatives {
     @ArchitNative("native sign(value: number): number;")
     public BigInteger sign(ScriptRun run, BigInteger value) {return BigInteger.valueOf(value.signum());}
 
-    @ArchitNative("native toRadians(deg: real): real;")
+    @ArchitNative("native to_radians(deg: real): real;")
     public Double toRadians(ScriptRun run, Double deg) {return Math.toRadians(deg);}
 
-    @ArchitNative("native toDegrees(rad: real): real;")
+    @ArchitNative("native to_degrees(rad: real): real;")
     public Double toDegrees(ScriptRun run, Double rad) {return Math.toDegrees(rad);}
+
+    @ArchitNative("native pi(): real;")
+    public Double pi(ScriptRun run) {
+        return Math.PI;
+    }
+
+    @ArchitNative("native e(): real;")
+    public Double e(ScriptRun run) {
+        return Math.E;
+    }
+
+    @ArchitNative("native inf(): real;")
+    public Double inf(ScriptRun run) {
+        return Double.POSITIVE_INFINITY;
+    }
+    
+    @ArchitNative("native nan(): real;")
+    public Double nan(ScriptRun run) {
+        return Double.NaN;
+    }
 }

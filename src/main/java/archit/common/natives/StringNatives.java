@@ -19,13 +19,13 @@ public class StringNatives {
     @ArchitNative("native contains(text: string, part: string): logic;")
     public Boolean contains(ScriptRun run, String text, String part) {return text.contains(part);}
 
-    @ArchitNative("native startsWith(text: string, prefix: string): logic;")
+    @ArchitNative("native starts_with(text: string, prefix: string): logic;")
     public Boolean startsWith(ScriptRun run, String text, String prefix) {return text.startsWith(prefix);}
 
-    @ArchitNative("native endsWith(text: string, suffix: string): logic;")
+    @ArchitNative("native ends_with(text: string, suffix: string): logic;")
     public Boolean endsWith(ScriptRun run, String text, String suffix) {return text.endsWith(suffix);}
 
-    @ArchitNative("native indexOf(text: string, part: string): number;")
+    @ArchitNative("native index_of(text: string, part: string): number;")
     public BigInteger indexOf(ScriptRun run, String text, String part) {return BigInteger.valueOf(text.indexOf(part));}
 
     @ArchitNative("native substring(text: string, begin: number, end: number): string;")
@@ -37,17 +37,8 @@ public class StringNatives {
     @ArchitNative("native trim(text: string): string;")
     public String trim(ScriptRun run, String text) {return text.trim();}
 
-    @ArchitNative("native isEmpty(text: string): logic;")
-    public Boolean isEmpty(ScriptRun run, String text) {return text.isEmpty();}
-
-    @ArchitNative("native equals(a: string, b: string): logic;")
-    public Boolean equals(ScriptRun run, String a, String b) {return a.equals(b);}
-
-    @ArchitNative("native equalsIgnoreCase(a: string, b: string): logic;")
+    @ArchitNative("native equals_ignore_case(a: string, b: string): logic;")
     public Boolean equalsIgnoreCase(ScriptRun run, String a, String b) {return a.equalsIgnoreCase(b);}
-
-    @ArchitNative("native compareTo(a: string, b: string): number;")
-    public BigInteger compareTo(ScriptRun run, String a, String b) {return BigInteger.valueOf(a.compareTo(b));}
 
     @ArchitNative("native matches(text: string, pattern: string): logic;")
     public Boolean matches(ScriptRun run, String text, String pattern) {return text.matches(pattern);}

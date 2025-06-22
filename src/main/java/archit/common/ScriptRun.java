@@ -4,14 +4,13 @@ import archit.common.visitors.EvaluationVisitor;
 import archit.common.visitors.TypeCheckingVisitor;
 import archit.parser.ArchitLexer;
 import archit.parser.ArchitParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Random;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public class ScriptRun {
     /**
@@ -23,8 +22,8 @@ public class ScriptRun {
     private final Interpreter interpreter;
     private final Path scriptLocation;
     private String args = "";
-    private int cursorX = 0, cursorY = 0, cursorZ = 0;  // wartosci przypisywane w konstruktorze,
-    private Random random = new Random();                       // chyba ze wywoływane z konsoli to domyslnie 0
+    private int cursorX = 0, cursorY = 0, cursorZ = 0;
+    private Random random = new Random();
 
     public ScriptRun(Interpreter interpreter, Path file, Object metadata, String args) {
         this.interpreter = interpreter;
@@ -42,17 +41,36 @@ public class ScriptRun {
 
     // getter i setter dla wirtualnego kursora
     public void setCursor(int x, int y, int z) {
-        this.cursorX = x; this.cursorY = y; this.cursorZ = z;
+        this.cursorX = x;
+        this.cursorY = y;
+        this.cursorZ = z;
     }
-    public void moveCursor(int x, int y, int z) {
-        this.cursorX += x; this.cursorY += y; this.cursorZ += z;
-    }
-    public int getCursorX() { return cursorX; }
-    public int getCursorY() { return cursorY; }
-    public int getCursorZ() { return cursorZ; }
 
-    public Random getRandom() { return random; }
-    public String getArgs() {return args;}
+    public void moveCursor(int x, int y, int z) {
+        this.cursorX += x;
+        this.cursorY += y;
+        this.cursorZ += z;
+    }
+
+    public int getCursorX() {
+        return cursorX;
+    }
+
+    public int getCursorY() {
+        return cursorY;
+    }
+
+    public int getCursorZ() {
+        return cursorZ;
+    }
+
+    public Random getRandom() {
+        return random;
+    }
+
+    public String getArgs() {
+        return args;
+    }
 
     public ScriptRun(Interpreter interpreter, Path file) {
         this(interpreter, file, null, "");
