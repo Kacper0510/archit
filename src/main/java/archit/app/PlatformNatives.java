@@ -9,31 +9,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-// TODO: implement 3D objects
 public class PlatformNatives {
 
-    private static class BlockPosition {
-        final int x, y, z;
-
-        BlockPosition(int x, int y, int z) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
+    private Map<BlockPosition, Material> getMap(ScriptRun run) {
+        return (Map<BlockPosition, Material>) run.getMetadata();
     }
-
-    private final List<BlockPosition> placedBlocks = new ArrayList<>();
 
     @ArchitNative("native place(block: material);")
     public void place(ScriptRun run, Material block) {
-        int x = run.getCursorX();
-        int y = run.getCursorY();
-        int z = run.getCursorZ();
-        placedBlocks.add(new BlockPosition(x, y, z));
+        var pos = new BlockPosition(run.getCursorX(), run.getCursorY(), run.getCursorZ());
+
+        getMap(run).put(pos, block);
 
         run.getInterpreter().getLogger().systemInfo(
-                "PLACE {} at {}, {}, {}", block, x, y, z
+                "PLACE {} at {}, {}, {}", block, pos.x(), pos.y(), pos.z()
         );
     }
 
@@ -42,12 +33,18 @@ public class PlatformNatives {
         run.getInterpreter().getLogger().systemInfo(
                 "CHECK at {}, {}, {}", run.getCursorX(), run.getCursorY(), run.getCursorZ()
         );
-        return new Material("air");
+
+        var pos = new BlockPosition(
+                run.getCursorX(), run.getCursorY(), run.getCursorZ()
+        );
+
+        return getMap(run).getOrDefault(pos, new Material("air"));
     }
 
-    public void exportToObj(String scriptFileName) {
-        String directoryPath = "obj/";
-        String objFileName = directoryPath + scriptFileName.replaceFirst("\\.\\w+$", "") + ".obj";
+    public void exportToObj(ScriptRun run) {
+        String scriptFileName = run.getScriptLocation().getFileName().toString();
+        String directoryPath = "obj";
+        String objFileName = directoryPath + "/" + scriptFileName.replaceFirst("\\.\\w+$", "") + ".obj";
         try {
             //tworzenie folderu
             java.nio.file.Files.createDirectories(java.nio.file.Paths.get(directoryPath));
@@ -55,30 +52,35 @@ public class PlatformNatives {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(objFileName))) {
                 long vertexIndex = 1;
 
-                for (BlockPosition pos : placedBlocks) {
-                    float x = pos.x;
-                    float y = pos.y;
-                    float z = pos.z;
+                Map<BlockPosition, Material> map = (Map<BlockPosition, Material>) run.getMetadata();
 
-                    //dodanie 8 wierzcholkow szescianu
-                    for (float[] offset : cubeVertices) {
-                        writer.write(String.format("v %.1f %.1f %.1f\n", x + offset[0], y + offset[1], z + offset[2]));
-                    }
+                for (BlockPosition pos : map.keySet()) {
+                    float x = pos.x();
+                    float y = pos.y();
+                    float z = pos.z();
 
-                    //dodanie 12 scian (12 trojkatow czyli 1 szescian)
-                    for (long[] face : cubeFaces) {
-                        writer.write(String.format("f %d %d %d\n",
-                                vertexIndex + face[0] - 1,
-                                vertexIndex + face[1] - 1,
-                                vertexIndex + face[2] - 1
-                        ));
+                    if(!map.getOrDefault(pos, new Material("air")).toString().equals("minecraft:air")) {
+
+                        //dodanie 8 wierzcholkow szescianu
+                        for (float[] offset : cubeVertices) {
+                            writer.write(String.format("v %.1f %.1f %.1f\n", x + offset[0], y + offset[1], z + offset[2]));
+                        }
+
+                        //dodanie 12 scian (12 trojkatow czyli 1 szescian)
+                        for (long[] face : cubeFaces) {
+                            writer.write(String.format("f %d %d %d\n",
+                                    vertexIndex + face[0] - 1,
+                                    vertexIndex + face[1] - 1,
+                                    vertexIndex + face[2] - 1
+                            ));
+                        }
                     }
 
                     vertexIndex += 8;
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();    //jaki wyjątek???????
+            throw new RuntimeException("Failed to export OBJ", e);    //jaki wyjątek???????
         }
     }
 

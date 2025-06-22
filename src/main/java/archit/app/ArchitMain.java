@@ -1,10 +1,13 @@
 package archit.app;
 
 import archit.common.Interpreter;
+import archit.common.Material;
 import archit.common.ScriptRun;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.fusesource.jansi.AnsiConsole;
 
@@ -23,15 +26,19 @@ public class ArchitMain {
     }
 
     public void run() {
+        Map<BlockPosition, Material> map = new HashMap<>();
         PlatformNatives platform = new PlatformNatives();
         interpreter.getStandardLibrary().registerNatives(platform);
+
+        this.run = new ScriptRun(interpreter, run.getScriptLocation(), map, run.getArgs());
+
         interpreter.getCurrentRuns().add(run);
-        run.run();
+        boolean success = run.run();
         interpreter.getCurrentRuns().remove(run);
 
-        //eksportowanie do .obj
-        var scriptPath = run.getScriptLocation();
-        platform.exportToObj(scriptPath.getFileName().toString());
+        if (success) {
+            platform.exportToObj(run);
+        }
     }
 
     public static void main(String[] args) {
