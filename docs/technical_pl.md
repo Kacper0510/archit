@@ -225,6 +225,9 @@ Główne elementy przebiegu interpretera:
 
 Odpowiada za sprawdzanie typów w kodzie źródłowym. Wykonuje analizę semantyczną, aby upewnić się, że wszystkie operacje są zgodne z typami danych i dozwolone w danym kontekście. Wykrywa błędy takie jak niezgodność typów, brakujące deklaracje zmiennych czy nieprawidłowe wywołania funkcji.
 
+Struktura typów (szczególnie tych złożonych) jest drzewiasta, co ilustruje poniższy diagram:
+![Diagram typów](img/type_diagram.png)
+
 Ważną cechą tego etapu jest także generowanie tablic symboli (klasa `InfoTables`), które przechowują informacje o zmiennych, funkcjach i rodzajach operatorów. Tablice te są wykorzystywane w kolejnych etapach interpretacji.
 
 Na tym etapie uzgadniane są również zasięgi zmiennych i funkcji. W przypadku zmiennych, zastosowano mechanizm przypisania unikatowego identyfikatora liczbowego dla każdej zmiennej, co pozwala na łatwe śledzenie ich użycia w kodzie. Funkcje są z kolei przechowywane w osobnej strukturze danych zawierającej wszelkie konieczne informacje (`ArchitFunction`).
@@ -260,12 +263,16 @@ Zasięgi na etapie sprawdzania typów i zmiennych są reprezentowane przez inter
 
 W tym miejscu składowane są wszelkie informacje potrzebne do działania sprawdzarki typów, a sama struktura danych nie jest przekazywana dalszym etapom.
 
+![Diagram hierarchii Scope](img/scope_diagram.png)
+
 ### `InfoTables`
 
 Tablice w klasie `InfoTables` są przekazywane jako efekt działania `TypeCheckingVisitor` do `EvaluationVisitor` i składowane jako `HashMap`:
 - **Mapa symboli na identyfikatory** - przechowuje lokacje w skrypcie wszelkich użyć zmiennych i przypisane im unikatowe identyfikatory liczbowe, które są używane do szybkiego dostępu do zmiennych w trakcie ewaluacji i generowane przy każdej deklaracji.
 - **Mapa wywołań funkcji na informacje o nich** - dla każdego napotkanego wywołania funkcji, przechowywana jest referencja do obiektu informacji o tej funkcji zawierającego nazwę, typ zwracany, parametry i ich typy, a także lokalizację w kodzie źródłowym.
 - **Mapa niektórych wyrażeń na typ operatora** - przechowuje informacje o operatorach użytych w wyrażeniach, co jest przydatne do sprawdzania poprawności typów i łatwego dostępu do implementacji danego operatora w trakcie ewaluacji. 
+
+![Diagram ważnych struktur danych](img/imp_struct_diagram.png)
 
 ### Stos zmiennych
 
@@ -278,6 +285,7 @@ W języku `archit` nie istnieją typowe rekordy aktywacji funkcji, cała funkcjo
 ## Ciekawsze aspekty implementacji
 
 - Interpolacja ciągów znaków przez specjalny tryb leksera, który pozwala na dynamiczne wstawianie wartości do tekstu.
+- Zastosowanie `BigInteger` do reprezentacji liczb całkowitych, co pozwala na obsługę bardzo dużych wartości bez utraty precyzji.
 - Obsługa funkcji natywnych, które są implementowane w Javie i mogą być wywoływane z poziomu skryptu za pomocą mechanizmu refleksji.
     
     Przykład:
@@ -295,5 +303,3 @@ W języku `archit` nie istnieją typowe rekordy aktywacji funkcji, cała funkcjo
 - Modularyzacja kodu w związku z koniecznością obsługi środowiska Minecrafta oraz środowiska terminalowego. Wymaga to jedynie implementacji kilku interfejsów w obu środowiskach, a reszta kodu jest wspólna i działa w obu przypadkach.
 - Animacje działania skryptu i przerywanie w dowolnym momencie, nadbudowane na specyficznej implementacji `EvaluationVisitor`.
 - Automatyzacja budowy projektu razem z generacją kodu Antlr4 przy użyciu Gradle oraz GitHub Actions.
-
-## Diagram klas
