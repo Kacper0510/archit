@@ -202,14 +202,98 @@ Warto zwrócić uwagę na regułę `interpolation`, która obsługuje interpolac
 Projekt budowany jest przy użyciu Gradle - najpopularniejszego narzędzia do automatyzacji budowy projektów w Javie. Jest to wymuszone m.in. przez konieczność budowania modyfikacji do Minecrafta, która wymaga specjalnych zależności i konfiguracji.
 
 W pliku `build.gradle` znajdują się wszystkie niezbędne zależności, konfiguracje i zadania do budowy projektu. Oto kluczowe szczegóły:
-- **Zależności**: Projekt korzysta z wielu bibliotek, w tym Antlr4 do parsowania języka, Fabric API do integracji z Minecraftem oraz bibliotek do obsługi kolorów ANSI w terminalu i eksportu modeli 3D.
+- **Zależności**: Projekt korzysta z wielu bibliotek, w tym Antlr4 do parsowania języka, Fabric API do integracji z Minecraftem oraz bibliotek do obsługi kolorów ANSI w terminalu i eksportu modeli 3D do formatu `.obj`.
 - **Zadania**: Zdefiniowane są zadania do budowy projektu, uruchamiania klienta Minecrafta lub wersji terminalowej - dostarczają je różne pluginy Gradle'a. Utworzono również własne zadania automatyzujące kopiowanie przykładów przy uruchamianiu gry oraz poprawiania struktury plików generowanych przez Antlr4, aby różne IDE mogły poprawnie rozpoznać wszelkie wygenerowane klasy.
 - **Shadow JAR**: Projekt korzysta z własnej implementacji podobnej do Maven Shade lub tzw. "fat JAR", która pozwala na spakowanie wszystkich zależności do jednego pliku JAR. Jest to przydatne w przypadku uruchamiania programu jako samodzielnej aplikacji, gdzie wszystkie zależności muszą być zawarte w jednym pliku. Jednocześnie, ten sam plik JAR może być używany jako mod do Minecrafta, gdzie zależności są dostarczane przez Fabric API.
 
+Kluczowe zadania w Gradle:
+- `runClient`: Uruchamia klienta Minecrafta z wczytaną modyfikacją.
+- `runServer`: Uruchamia serwer Minecrafta z wczytaną modyfikacją.
+- `run`: Uruchamia program jako samodzielną aplikację.
+- `build`: Buduje projekt, tworząc plik JAR z wszystkimi zależnościami.
+- `generateGrammarSource`: Generuje klasy parsera i leksera na podstawie gramatyki Antlr4 - zazwyczaj uruchamiane jedynie jako dependencja `build`.
+
 ## Przebiegi interpretera
+
+Interpreter języka `archit` jest zbudowany w oparciu o wzorzec projektowy **Visitor**, który pozwala na łatwe rozszerzanie funkcjonalności bez modyfikacji istniejącego kodu.
+
+Wszelkie błędy jakiegokolwiek etapu i rodzaju są zgłaszane poprzez klasę `ScriptException`, która wymusza podanie miejsca w kodzie skryptu, gdzie wystąpił błąd, oraz ułatwia formatowanie wiadomości błędu.
+
+Główne elementy przebiegu interpretera:
+
+### `TypeCheckingVisitor`
+
+Odpowiada za sprawdzanie typów w kodzie źródłowym. Wykonuje analizę semantyczną, aby upewnić się, że wszystkie operacje są zgodne z typami danych i dozwolone w danym kontekście. Wykrywa błędy takie jak niezgodność typów, brakujące deklaracje zmiennych czy nieprawidłowe wywołania funkcji.
+
+Ważną cechą tego etapu jest także generowanie tablic symboli (klasa `InfoTables`), które przechowują informacje o zmiennych, funkcjach i rodzajach operatorów. Tablice te są wykorzystywane w kolejnych etapach interpretacji.
+
+Na tym etapie uzgadniane są również zasięgi zmiennych i funkcji. W przypadku zmiennych, zastosowano mechanizm przypisania unikatowego identyfikatora liczbowego dla każdej zmiennej, co pozwala na łatwe śledzenie ich użycia w kodzie. Funkcje są z kolei przechowywane w osobnej strukturze danych zawierającej wszelkie konieczne informacje (`ArchitFunction`).
+
+### `DeadCodeVisitor`
+
+Pomocniczy, pomniejszy przebieg, który wykrywa niezgodności w istnieniu (bądź konkretniej - braku istnienia) wywołań `return` oraz wykrywa martwy kod (kod, który nie ma prawa się kiedykolwiek wywołać). Wykrywanie braku zwrotu jest na tyle dopracowane, by dało się np. jako ostatnią instrukcję dać wyczerpującą instrukcję `if`. Z kolei wykrywanie martwego kodu potrafi znaleźć błędne instrukcje po `return`, `break` czy `continue`.
+
+### `EvaluationVisitor`
+
+Odpowiada za faktyczne wykonanie kodu. Nie jest to prawdziwy `visitor`, jedynie przypomina takowy w strukturze, gdyż nie jesteśmy w stanie używać zwykłej, Javowej rekurencji w przetwarzaniu drzewa. Takie postępowanie zatrzymałoby główny wątek Minecrafta - ograniczenie jednowątkowości narzucone przez samą grę - co doprowadza z kolei do zawieszenia serwera dla wszystkich graczy.
+
+W związku z tymi ograniczeniami, `EvaluationVisitor` posiada własną kolejkę zadań/stos wywołań, które są wykonywane w kolejności LIFO. Przekłada się to na wrzucanie obiektów `Runnable` na stos po napotkaniu każdej reguły parsera, nawet tych związanych z najprostszymi instrukcjami typu `2+2`. Wykorzystanie interfesu `Runnable` pozwala na łatwe tworzenie zadań do wykonania za pomocą wyrażeń lambda. Dzięki temu, kod może być przerwany praktycznie w dowolnym momencie, a jego wykonanie może być kontynuowane później, co jest kluczowe dla pozostawienia czasu w każdym 'ticku' gry dla niej samej.
+
+Aktualna implementacja zezwala na wykorzystanie $3 \, \text{ms}$ na jedno uruchomienie danego skryptu na jeden 'tick' gry (których jest 20 w ciągu sekundy przy normalnym działaniu gry), a także daje graczowi szansę na przerwanie wykonywania skryptu odpowiednim poleceniem w konsoli.
+
+`EvaluationVisitor` posiada trzy stosy:
+1. **Stos wywołań** - przechowuje aktualnie wykonywane części kodu (nie tylko funkcje, jak to bywa w większości języków programowania), opisany powyżej.
+2. **Stos obiektów** - przechowuje obiekty w użyciu, m.in. pośrednie wyniki ewaluacji wyrażeń, parametrów funkcji, interpolacji, etc.
+3. **Stos zmiennych** - przechowuje zmienne w użyciu, z uwzględnieniem zasięgów, lecz tylko tych wynikających z wywołań funkcji na potrzeby rekurencji. Więcej informacji w sekcji poniżej.
+
+Czysto teoretycznie, powyższe stosy mogłyby być zrealizowane jako jedna struktura danych, jednakże w praktyce takie podejście okazało się nieefektywne i skomplikowane. Dlatego zdecydowano się na rozdzielenie ich, co pozwala na lepszą organizację kodu i łatwiejsze zarządzanie typami w Javie.
+
+Na tym etapie są wykrywane jedynie błędy wykonania, takie jak dzielenie przez zero, przekroczenie długości tablicy, przekroczenie limitu stosu (aktualnie wynosi on `100` wywołań funkcji), etc. Założone jest, że wszelkie typy i zasięgi są już zweryfikowane.
 
 ## Implementacje tablic symboli i funkcji
 
+Jak już było wspomniane w poprzednich sekcjach, część tablic symboli istnieje na etapie sprawdzania typów, a część jest tworzona na etapie ewaluacji.
+
+### `Scope`
+
+Zasięgi na etapie sprawdzania typów i zmiennych są reprezentowane przez interfejs `Scope` oraz jego implementację, która przechowuje informacje o zmiennych i funkcjach oraz o zasięgu-rodzicu. W związku z tym, jest to swego rodzaju lista dowiązana, pozwalająca na rekurencyjne przeszukiwanie coraz rozleglejszych zasięgów, aż do zasięgu standardowej biblioteki języka, która jest zawsze dostępna.
+
+W tym miejscu składowane są wszelkie informacje potrzebne do działania sprawdzarki typów, a sama struktura danych nie jest przekazywana dalszym etapom.
+
+### `InfoTables`
+
+Tablice w klasie `InfoTables` są przekazywane jako efekt działania `TypeCheckingVisitor` do `EvaluationVisitor` i składowane jako `HashMap`:
+- **Mapa symboli na identyfikatory** - przechowuje lokacje w skrypcie wszelkich użyć zmiennych i przypisane im unikatowe identyfikatory liczbowe, które są używane do szybkiego dostępu do zmiennych w trakcie ewaluacji i generowane przy każdej deklaracji.
+- **Mapa wywołań funkcji na informacje o nich** - dla każdego napotkanego wywołania funkcji, przechowywana jest referencja do obiektu informacji o tej funkcji zawierającego nazwę, typ zwracany, parametry i ich typy, a także lokalizację w kodzie źródłowym.
+- **Mapa niektórych wyrażeń na typ operatora** - przechowuje informacje o operatorach użytych w wyrażeniach, co jest przydatne do sprawdzania poprawności typów i łatwego dostępu do implementacji danego operatora w trakcie ewaluacji. 
+
+### Stos zmiennych
+
+Jest to w zasadzie stos map, które łączą ze sobą identyfikator zmiennej i jej wartość. Sama mapa wystarcza do wyrażenia scope'ów poza funkcjami - te są uzgadniane na etapie sprawdzania typów, lecz po wprowadzeniu funkcji oraz ich rekurencji, konieczne stało się wprowadzenie stosu, który dodaje nową pustą 'ramkę' na zmienne dla każdego wywołania funkcji.
+
+### Rekordy aktywacji
+
+W języku `archit` nie istnieją typowe rekordy aktywacji funkcji, cała funkcjonalność jest realizowana jedynie poprzez dodanie ramki stosu zmiennych oraz manipulację stosu wywołań. W związku z tym, nie ma potrzeby tworzenia osobnej struktury danych dla rekordów aktywacji, a wszystkie informacje są przechowywane w stosach.
+
 ## Ciekawsze aspekty implementacji
 
-## Dokumentacja klas
+- Interpolacja ciągów znaków przez specjalny tryb leksera, który pozwala na dynamiczne wstawianie wartości do tekstu.
+- Obsługa funkcji natywnych, które są implementowane w Javie i mogą być wywoływane z poziomu skryptu za pomocą mechanizmu refleksji.
+    
+    Przykład:
+
+    ```java
+    @ArchitNative("native as_real(value: number): real;")
+    public Double asReal(ScriptRun run, BigInteger value) {
+        return value.doubleValue();
+    }
+    ```
+
+    Należy zwrócić uwagę na zgodność deklaracji w języku `archit` z deklaracją w Javie - typy muszą być zgodne. W przeciwnym razie, funkcja nie będzie dostępna w skrypcie.
+
+- Nadbudowanie funkcji dynamicznych nad funkcjami natywnymi w Javie, co jest dozwolone tylko w tym kontekście, a w kontekście użytkownika już nie. Pozwala to m.in. na stworzenie w standardowej bibliotece funkcji dotyczących różnych rodzajów list bądź map albo na przekazanie dowolnego typu do funkcji `print` bez zaburzania silnego typowania.
+- Modularyzacja kodu w związku z koniecznością obsługi środowiska Minecrafta oraz środowiska terminalowego. Wymaga to jedynie implementacji kilku interfejsów w obu środowiskach, a reszta kodu jest wspólna i działa w obu przypadkach.
+- Animacje działania skryptu i przerywanie w dowolnym momencie, nadbudowane na specyficznej implementacji `EvaluationVisitor`.
+- Automatyzacja budowy projektu razem z generacją kodu Antlr4 przy użyciu Gradle oraz GitHub Actions.
+
+## Diagram klas
