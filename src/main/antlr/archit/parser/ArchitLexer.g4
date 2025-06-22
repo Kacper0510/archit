@@ -40,6 +40,7 @@ ASSIGN: '=';
 POWER: '^';
 TAG: '#';
 ENUM: '$';
+PARENT: '~';
 
 // Comments
 COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
