@@ -78,9 +78,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     public Type visitVarDecl(ArchitParser.VarDeclContext ctx) {
         String name = ctx.symbol().getText();
         if (name.contains("~")) {
-            throw new ScriptException(
-                run, NAME_ERROR, ctx.symbol(), "Variable declarations cannot use '~'"
-            );
+            throw new ScriptException(run, NAME_ERROR, ctx.symbol(), "Variable declarations cannot use '~'");
         }
         Type declared = visit(ctx.type());
         // check initializer
@@ -315,14 +313,27 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         }
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
-            throw new ScriptException(
-                run,
-                NAME_ERROR,
-                ctx,
-                "Function '{}({})' not found",
-                name,
-                String.join(", ", Arrays.stream(at).map(Type::toString).toList())
-            );
+            var suggestions = currentScope.getLevenshteinSuggestions(name);
+            if (suggestions.isEmpty()) {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList())
+                );
+            } else {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found - did you mean any of these: {}",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList()),
+                    String.join(", ", suggestions)
+                );
+            }
         }
         tables.addFunctionMapping(ctx, fn);
         return fn.returnType();
@@ -342,14 +353,27 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         }
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
-            throw new ScriptException(
-                run,
-                NAME_ERROR,
-                ctx,
-                "Function '{}({})' not found",
-                name,
-                Arrays.stream(at).map(Type::toString).toList()
-            );
+            var suggestions = currentScope.getLevenshteinSuggestions(name);
+            if (suggestions.isEmpty()) {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList())
+                );
+            } else {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found - did you mean any of these: {}",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList()),
+                    String.join(", ", suggestions)
+                );
+            }
         }
         tables.addFunctionMapping(ctx, fn);
         return fn.returnType();

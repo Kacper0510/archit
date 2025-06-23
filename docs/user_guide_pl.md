@@ -190,7 +190,7 @@ var flag2: logic = false;
 
 ### string
 
-Typ tekstowy, używany do przechowywania ciągów znaków. Ciąg musi być ujęty w pojedyncze apostrofy. Wspiera interpolację – wstawianie wartości zmiennych do tekstu za pomocą składni "{zmienna}".
+Typ tekstowy, używany do przechowywania ciągów znaków. Ciąg musi być ujęty w pojedyncze apostrofy. Wspiera interpolację – wstawianie wartości wyrażeń do tekstu za pomocą składni "{wyrażenie}".
 
 Przykłady:
 
@@ -259,6 +259,170 @@ var dir: <up, down, left, right> = $up;
 move $posx;
 ```
 
+## Składnia języka
+
+### Operatory arytmetyczne
+
+Służą do podstawowych operacji na liczbach (zarówno number, jak i real).
+
+- `+` -  dodawanie
+
+- `-` - odejmowanie
+
+- `*` – mnożenie
+
+- `/` – dzielenie
+
+- `^` – potęgowanie
+
+- `%` – modulo (reszta z dzielenia)
+
+Każdy z tych operatorów ma również wersję przypisania:
+
+```
++=, -=, *=, /=, ^=, %=
+```
+
+### Operatory logiczne
+
+Pozwalają łączyć i negować warunki logiczne (logic).
+
+- `and` – koniunkcja (i)
+
+- `or` – alternatywa (lub)
+
+- `not` – negacja (nie)
+
+### Operatory porównań
+
+Używane w wyrażeniach warunkowych do porównywania wartości:
+
+- `==` – równe
+
+- `!=` – różne
+
+- `>` – większe
+
+- `>=` – większe lub równe
+
+- `<` – mniejsze
+
+- `<=` – mniejsze lub równe
+
+### Zmienne
+
+Służą do przechowywania danych. Deklaracja zmiennej wymaga podania typu, nazwy i wartości początkowej.
+
+Przykład:
+
+```
+var x: number = 10;
+var y: real = 3.14;
+var flag: logic = true;
+var name: string = 'Jan';
+```
+
+Po zadeklarowaniu zmiennej można ją modyfikować, przypisując nową wartość:
+
+```
+x = 20;  // zmiana wartości x
+flag = false;  // zmiana wartości flag
+name = 'Anna';  // zmiana wartości name
+```
+
+### Komentarze
+
+Pozwalają dodawać wyjaśnienia w kodzie, które są ignorowane przez interpreter.
+
+- **Jednoliniowy**: wszystko po // aż do końca linii
+
+- **Wieloliniowy**: tekst między /* i */
+
+### Instrukcja warunkowa
+
+Pozwala wykonywać różne fragmenty kodu w zależności od wartości wyrażenia logicznego.
+
+Przykład:
+
+```
+if <warunek1> {  
+    // wykona się, gdy warunek1 jest prawdziwy  
+} else if <warunek2> {  
+    // jeżeli warunek1 był fałszywy, a warunek2 prawdziwy  
+} else {  
+    // gdy żaden z powyższych warunków nie był prawdziwy  
+}  
+```
+
+### Pętle
+
+- **while**
+
+    Powtarza blok kodu tak długo, jak długo warunek pozostaje prawdziwy.
+
+    ```
+    while <warunek> {  
+        // kod wykonywany w każdej iteracji  
+    } 
+    ```
+
+- **repeat**
+
+    Powtarza blok kodu określoną liczbę razy.
+
+    ```
+    repeat <N> {  
+        // kod wykonywany N razy  
+    } 
+    ```
+
+### break i continue
+
+- **break** – natychmiastowo przerywa wykonywanie pętli
+
+- **continue** – przerywa bieżącą iterację pętli i przechodzi do następnej
+
+### Wywoływanie funkcji
+
+W języku `archit` funkcje są podstawowym sposobem organizacji kodu. Można je wywoływać przekazując odpowiednie argumenty oraz pobierając wartość wynikową.
+
+Przykład:
+
+```
+var wynik: real = nazwa_funkcji(arg1, arg2);
+```
+
+W niektórych miejscach, gdzie da się wykluczyć niejednoznaczność przekazywania zagnieżdżonych parametrów, funkcje mogą być wywoływane bez użycia nawiasów:
+
+```
+nazwa_funkcji arg1, arg2;
+```
+
+
+### Definiowanie własnych funkcji
+
+Definiowanie własnych funkcji pozwala na tworzenie kodu wielokrotnego użytku. Funkcje mogą przyjmować argumenty i zwracać wartość.
+
+Przykład:
+
+```
+function nazwa_funkcji(parametr1: number, parametr2: real) -> real {
+    return as_real(parametr1) + parametr2;
+}
+```
+
+Fragment `-> real` oznacza, że funkcja zwraca wartość typu `real`. Jeśli funkcja nie zwraca wartości, można pominąć ten fragment oraz odpowiadające wywołania `return`.
+
+Funkcje mogą używać rekurencji, czyli wywoływać same siebie.
+
+### Zasięg zmiennych
+
+Zasięg zmiennych określa, gdzie dana zmienna jest widoczna i dostępna w kodzie. Mimo to, można zawsze odwoływać się do zmiennych z zasięgu zewnętrznego, w tym do zmiennych globalnych i standardowej biblioteki. To zachowanie tyczy się również funkcji.
+
+Każde użycie nawiasów klamrowych `{}` tworzy nowy zasięg. Można także podać same nawiasy klamrowe jako instrukcję.
+
+Aby odwołać się do zmiennej z zasięgu zewnętrznego, wystarczy użyć jej nazwy. Jeśli zmienna o tej samej nazwie istnieje w bieżącym zasięgu, zostanie użyta ta lokalna wersja. Jeśli mimo to naprawdę chcesz odwołać się do zmiennej z zasięgu zewnętrznego, możesz użyć odpowiedniej liczby powtórzeń znaku `~`, wskazującego na ilość zmiennych do przeskoczenia w górę w hierarchii zasięgów.
+
 ## Standardowa biblioteka
 
 01. `sin`
@@ -313,7 +477,7 @@ move $posx;
     sign(value: number): number
     ```
 
-06. `toRadians`
+06. `to_radians`
 
     Konwertuje wartość w stopniach na radiany.
 
@@ -323,7 +487,7 @@ move $posx;
     toRadians(deg: real): real
     ```
 
-07. `toDegrees`
+07. `to_degrees`
 
     Konwertuje wartość w radianach na stopnie.
 
@@ -405,7 +569,7 @@ move $posx;
     contains(text: string, part: string): boolean
     ```
 
-15. `startsWith`
+15. `starts_with`
 
     Sprawdza, czy tekst zaczyna się od podanego prefiksu.
 
@@ -415,7 +579,7 @@ move $posx;
     startsWith(text: string, prefix: string): boolean
     ```
 
-16. `endsWith`
+16. `ends_with`
 
     Sprawdza, czy tekst kończy się na podany sufiks.
 
@@ -425,14 +589,14 @@ move $posx;
     endsWith(text: string, suffix: string): boolean
     ```
 
-17. `indexOf`
+17. `index_of`
 
     Zwraca indeks pierwszego wystąpienia podciągu lub –1, jeśli nie istnieje.
 
     ### Przykład:
 
     ```
-    indexOf(text: string, part: string): number
+    index_of(text: string, part: string): number
     ```
 
 18. `substring`
@@ -465,47 +629,17 @@ move $posx;
     trim(text: string): string
     ```
 
-21. `isEmpty`
-
-    Zwraca true, jeśli tekst jest pusty.
-
-    ### Przykład:
-
-    ```
-    isEmpty(text: string): boolean
-    ```
-
-22. `equals`
-
-    Porównuje dwa ciągi, uwzględniając wielkość liter.
-
-    ### Przykład:
-
-    ```
-    equals(a: string, b: string): boolean
-    ```
-
-23. `equalsIgnoreCase`
+21. `equals_ignore_case`
 
     Porównuje dwa ciągi, ignorując wielkość liter.
 
     ### Przykład:
 
     ```
-    equalsIgnoreCase(a: string, b: string): boolean
+    equals_ignore_case(a: string, b: string): boolean
     ```
 
-24. `compareTo`
-
-    Porównuje leksykograficznie dwa ciągi; zwraca ujemną liczbę, 0 lub dodatnią.
-
-    ### Przykład:
-
-    ```
-    compareTo(a: string, b: string): number
-    ```
-
-25. `matches`
+22. `matches`
 
     Sprawdza, czy tekst pasuje do wyrażenia regularnego.
 
@@ -515,7 +649,7 @@ move $posx;
     matches(text: string, pattern: string): boolean
     ```
 
-26. `print`
+23. `print`
 
     Wypisuje komunikat w konsoli skryptu.
 
@@ -525,7 +659,7 @@ move $posx;
     print(message: ?)
     ```
 
-27. `move`
+24. `move`
 
     Przesuwa kursor w świecie Minecraft.
 
@@ -537,7 +671,7 @@ move $posx;
     move(vector: [number])
     ```
 
-28. `position`
+25. `position`
 
     Zwraca bieżące współrzędne kursora jako listę [x, y, z].
 
@@ -547,7 +681,7 @@ move $posx;
     position(): [number]
     ```
 
-29. `as_real`
+26. `as_real`
 
     Rzutuje wartość number lub tekst na real.
 
@@ -558,7 +692,7 @@ move $posx;
     as_real(value: string): real
     ```
 
-30. `as_number`
+27. `as_number`
 
     Rzutuje wartość real lub tekst na number.
 
@@ -569,7 +703,7 @@ move $posx;
     as_number(value: string): number
     ```
 
-31. `as_material`
+28. `as_material`
 
     Rzutuje tekst w formacie namespace:id (lub :id) na material.
 
@@ -579,7 +713,7 @@ move $posx;
     as_material(value: string): material
     ```
 
-32. `sqrt`
+29. `sqrt`
 
     Oblicza pierwiastek kwadratowy.
 
@@ -590,7 +724,7 @@ move $posx;
     sqrt(value: number): real
     ```
 
-33. `abs`
+30. `abs`
 
     Zwraca wartość bezwzględną.
 
@@ -601,7 +735,7 @@ move $posx;
     abs(value: number): number
     ```
 
-34. `floor`
+31. `floor`
 
     Zaokrągla w dół do najbliższej liczby całkowitej.
 
@@ -611,7 +745,7 @@ move $posx;
     floor(value: real): number
     ```
 
-35. `ceil`
+32. `ceil`
 
     Zaokrągla w górę do najbliższej liczby całkowitej.
 
@@ -621,7 +755,7 @@ move $posx;
     ceil(value: real): number
     ```
 
-36. `round`
+33. `round`
 
     Zaokrągla do najbliższej liczby całkowitej.
 
@@ -630,108 +764,6 @@ move $posx;
     ```
     round(value: real): number
     ```
-
-## Składnia języka
-
-### Operatory arytmetyczne
-
-Służą do podstawowych operacji na liczbach (zarówno number, jak i real).
-
-- `+` -  dodawanie
-
-- `-` - odejmowanie
-
-- `*` – mnożenie
-
-- `/` – dzielenie
-
-- `^` – potęgowanie
-
-- `%` – modulo (reszta z dzielenia)
-
-Każdy z tych operatorów ma również wersję przypisania:
-
-```
-+=, -=, *=, /=, ^=, %=
-```
-
-### Operatory logiczne
-
-Pozwalają łączyć i negować warunki logiczne (logic).
-
-- `and` – koniunkcja (i)
-
-- `or` – alternatywa (lub)
-
-- `not` – negacja (nie)
-
-### Operatory porównań
-
-Używane w wyrażeniach warunkowych do porównywania wartości:
-
-- `==` – równe
-
-- `!=` – różne
-
-- `>` – większe
-
-- `>=` – większe lub równe
-
-- `<` – mniejsze
-
-- `<=` – mniejsze lub równe
-
-### Komentarze
-
-Pozwalają dodawać wyjaśnienia w kodzie, które są ignorowane przez interpreter.
-
-- **Jednoliniowy**: wszystko po // aż do końca linii
-
-- **Wieloliniowy**: tekst między /* i */
-
-### Instrukcja warunkowa
-
-Pozwala wykonywać różne fragmenty kodu w zależności od wartości wyrażenia logicznego.
-
-Przykład:
-
-```
-if <warunek1> {  
-    // wykona się, gdy warunek1 jest prawdziwy  
-} else if <warunek2> {  
-    // jeżeli warunek1 był fałszywy, a warunek2 prawdziwy  
-} else {  
-    // gdy żaden z powyższych warunków nie był prawdziwy  
-}  
-```
-
-### Pętle
-
-- **while**
-
-    Powtarza blok kodu tak długo, jak długo warunek pozostaje prawdziwy.
-
-    ```
-    while <warunek> {  
-        // kod wykonywany w każdej iteracji  
-    } 
-    ```
-
-- **repeat**
-
-    Powtarza blok kodu określoną liczbę razy.
-
-    ```
-    repeat <N> {  
-        // kod wykonywany N razy  
-    } 
-    ```
-
-### break i continue
-
-- **break** – natychmiastowo przerywa wykonywanie pętli
-
-- **continue** – przerywa bieżącą iterację pętli i przechodzi do następnej
 
 ## Przykładowy skrypt
 

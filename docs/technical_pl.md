@@ -323,3 +323,5 @@ W języku `archit` nie istnieją typowe rekordy aktywacji funkcji, cała funkcjo
 - Animacje działania skryptu i przerywanie w dowolnym momencie, nadbudowane na specyficznej implementacji `EvaluationVisitor`.
 
 - Automatyzacja budowy projektu razem z generacją kodu Antlr4 przy użyciu Gradle oraz GitHub Actions.
+
+- Podpowiedzi do błędnie wpisanych nazw zmiennych i funkcji za pomocą [odległości Damerau-Levenshteina](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) ($< 3$ - maksymalnie dwie literówki).

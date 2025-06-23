@@ -60,10 +60,9 @@ public class ScopeImpl implements Scope {
 
     @Override
     public Variable resolveVariable(String name, int depth) {
-        if (variables.containsKey(name)) {
-            if (depth > 0) {
-                return parent.resolveVariable(name, depth - 1);
-            }
+        if (depth > 0) {
+            return parent.resolveVariable(name, depth - 1);
+        } else if (variables.containsKey(name)) {
             return variables.get(name);
         }
         return parent.resolveVariable(name, depth);

@@ -1,0 +1,3 @@
+var a: string = args();
+var b: string = upper a;
+print "Hello, {b}!";
