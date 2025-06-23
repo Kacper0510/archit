@@ -104,13 +104,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
 
     @Override
     public Type visitAssignStat(ArchitParser.AssignStatContext ctx) {
-        String name = ctx.symbol().getText();
-        Scope.Variable varRes = currentScope.resolveVariable(name);
-        if (varRes == null) {
-            throw new ScriptException(run, NAME_ERROR, ctx.symbol(), "Variable '{}' not defined", name);
-        }
-
-        Type lhs = varRes.type();
+        Type lhs = visitSymbol(ctx.symbol());
         Type rhs = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
         if (rhs.equals(Type.emptyList) && lhs.asListType() != null) {
             rhs = lhs;
@@ -118,7 +112,6 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             rhs = lhs;
         }
 
-        tables.addSymbolMapping(ctx.symbol(), varRes.id());
         String op = ctx.op.getText();
         switch (op) {
             case "=" -> {
@@ -178,7 +171,9 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 }
             }
         }
-        throw new ScriptException(run, TYPE_ERROR, ctx, "Cannot assign with {} to '{}' - {} to {}", op, name, rhs, lhs);
+        throw new ScriptException(
+            run, TYPE_ERROR, ctx, "Cannot assign with {} to '{}' - {} to {}", op, ctx.symbol().getText(), rhs, lhs
+        );
     }
 
     @Override
@@ -186,7 +181,22 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         String name = ctx.ID().getText();
         Scope.Variable varRes = currentScope.resolveVariable(name);
         if (varRes == null) {
-            throw new ScriptException(run, NAME_ERROR, ctx, "Variable '{}' not defined", name);
+            var suggestions = currentScope.getLevenshteinSuggestions(name);
+            suggestions.remove(name);
+            if (suggestions.isEmpty()) {
+                throw new ScriptException(
+                    run, NAME_ERROR, ctx, "Variable '{}' not defined or too many '~' prefixes", name
+                );
+            } else {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Variable '{}' not defined or too many '~' prefixes - did you mean any of these: {}",
+                    name,
+                    String.join(", ", suggestions)
+                );
+            }
         }
         tables.addSymbolMapping(ctx, varRes.id());
         return varRes.type();
