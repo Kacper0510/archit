@@ -77,6 +77,9 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     @Override
     public Type visitVarDecl(ArchitParser.VarDeclContext ctx) {
         String name = ctx.symbol().getText();
+        if (name.contains("~")) {
+            throw new ScriptException(run, NAME_ERROR, ctx.symbol(), "Variable declarations cannot use '~'");
+        }
         Type declared = visit(ctx.type());
         // check initializer
         Type init = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
@@ -104,13 +107,7 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
 
     @Override
     public Type visitAssignStat(ArchitParser.AssignStatContext ctx) {
-        String name = ctx.symbol().getText();
-        Scope.Variable varRes = currentScope.resolveVariable(name);
-        if (varRes == null) {
-            throw new ScriptException(run, NAME_ERROR, ctx.symbol(), "Variable '{}' not defined", name);
-        }
-
-        Type lhs = varRes.type();
+        Type lhs = visitSymbol(ctx.symbol());
         Type rhs = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
         if (rhs.equals(Type.emptyList) && lhs.asListType() != null) {
             rhs = lhs;
@@ -118,7 +115,6 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
             rhs = lhs;
         }
 
-        tables.addSymbolMapping(ctx.symbol(), varRes.id());
         String op = ctx.op.getText();
         switch (op) {
             case "=" -> {
@@ -178,15 +174,32 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
                 }
             }
         }
-        throw new ScriptException(run, TYPE_ERROR, ctx, "Cannot assign with {} to '{}' - {} to {}", op, name, rhs, lhs);
+        throw new ScriptException(
+            run, TYPE_ERROR, ctx, "Cannot assign with {} to '{}' - {} to {}", op, ctx.symbol().getText(), rhs, lhs
+        );
     }
 
     @Override
     public Type visitSymbol(ArchitParser.SymbolContext ctx) {
         String name = ctx.ID().getText();
-        Scope.Variable varRes = currentScope.resolveVariable(name);
+        int parentLevels = ctx.children.size() - 1;
+        Scope.Variable varRes = currentScope.resolveVariable(name, parentLevels);
         if (varRes == null) {
-            throw new ScriptException(run, NAME_ERROR, ctx, "Variable '{}' not defined", name);
+            var suggestions = currentScope.getLevenshteinSuggestions(name);
+            if (suggestions.contains(name)) {
+                throw new ScriptException(run, NAME_ERROR, ctx, "Too many '~' prefixes");
+            } else if (suggestions.isEmpty()) {
+                throw new ScriptException(run, NAME_ERROR, ctx, "Variable '{}' not defined", name);
+            } else {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Variable '{}' not defined - did you mean any of these: {}",
+                    name,
+                    String.join(", ", suggestions)
+                );
+            }
         }
         tables.addSymbolMapping(ctx, varRes.id());
         return varRes.type();
@@ -300,14 +313,27 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         }
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
-            throw new ScriptException(
-                run,
-                NAME_ERROR,
-                ctx,
-                "Function '{}({})' not found",
-                name,
-                String.join(", ", Arrays.stream(at).map(Type::toString).toList())
-            );
+            var suggestions = currentScope.getLevenshteinSuggestions(name);
+            if (suggestions.isEmpty()) {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList())
+                );
+            } else {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found - did you mean any of these: {}",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList()),
+                    String.join(", ", suggestions)
+                );
+            }
         }
         tables.addFunctionMapping(ctx, fn);
         return fn.returnType();
@@ -327,14 +353,27 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
         }
         ArchitFunction fn = currentScope.resolveFunction(name, at);
         if (fn == null) {
-            throw new ScriptException(
-                run,
-                NAME_ERROR,
-                ctx,
-                "Function '{}({})' not found",
-                name,
-                Arrays.stream(at).map(Type::toString).toList()
-            );
+            var suggestions = currentScope.getLevenshteinSuggestions(name);
+            if (suggestions.isEmpty()) {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList())
+                );
+            } else {
+                throw new ScriptException(
+                    run,
+                    NAME_ERROR,
+                    ctx,
+                    "Function '{}({})' not found - did you mean any of these: {}",
+                    name,
+                    String.join(", ", Arrays.stream(at).map(Type::toString).toList()),
+                    String.join(", ", suggestions)
+                );
+            }
         }
         tables.addFunctionMapping(ctx, fn);
         return fn.returnType();

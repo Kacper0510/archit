@@ -1,6 +1,7 @@
 package archit.common.stdlib;
 
 import archit.common.ArchitFunction;
+import archit.common.DamerauLevenshtein;
 import archit.common.Logging;
 import archit.common.Scope;
 import archit.common.ScriptErrorListener;
@@ -16,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,17 +26,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
 public class StandardLibrary implements Scope {
     private static final Object[] COMMON_NATIVES = {
-        new MathNatives(),
-        new BasicNatives(),
-        new Casts(),
-        new Randomness(),
-        new StringNatives(),
+        new MathNatives(), new BasicNatives(), new Casts(), new Randomness(), new StringNatives(),
     };
 
     private final Map<String, Set<ArchitFunction>> registeredFunctions = new HashMap<>();
@@ -244,7 +244,7 @@ public class StandardLibrary implements Scope {
     }
 
     @Override
-    public Variable resolveVariable(String name) {
+    public Variable resolveVariable(String name, int depth) {
         return null;
     }
 
@@ -268,5 +268,15 @@ public class StandardLibrary implements Scope {
     @Override
     public Scope getParent() {
         return null;
+    }
+
+    @Override
+    public Set<String> getLevenshteinSuggestions(String name) {
+        return Stream.concat(registeredFunctions.keySet().stream(), registeredDynamics.keySet().stream())
+            .distinct()
+            .map(s -> new SimpleEntry<>(s, DamerauLevenshtein.calculateDistance(s, name)))
+            .filter(s -> s.getValue() < 3)
+            .map(SimpleEntry::getKey)
+            .collect(Collectors.toSet());
     }
 }
