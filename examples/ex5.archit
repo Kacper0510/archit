@@ -1,0 +1,5 @@
+var i: number = 1;
+var i2: number = as_number(1.5);
+var i4: number = as_number("1");
+
+print("{i} {i2} {i4}");

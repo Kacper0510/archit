@@ -1,0 +1,8 @@
+var x: number = 100;
+
+function foo(x: number, /* x: number*/) {
+  // var x: number = 1;
+  print("{x} {~x});
+}
+
+foo(5);

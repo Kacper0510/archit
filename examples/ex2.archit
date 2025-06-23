@@ -1,0 +1,16 @@
+var x: number = 100;
+
+function foo(n: number): number {
+  var x: number = n;
+  //x = n;
+
+  if (n > 0) {
+    foo(n - 1);
+  }
+
+  print("{x} {~x}");
+  // print(~~x);
+  return 0;
+}
+
+foo(6);

@@ -1,0 +1,18 @@
+var x: number = 1;
+var y: number = 100;
+{
+  x = 2;
+  {
+    x = 3;
+    print(x);
+    print(~x);
+    print(~~x);
+
+    print(y);
+    print(~y);
+    print(~~y);
+
+    // print(~~~x);
+    // print(~~~y);
+  }
+}

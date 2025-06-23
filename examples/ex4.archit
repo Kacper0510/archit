@@ -1,0 +1,10 @@
+var i: number = 0;
+var j: number = 0;
+while(i < 10){
+    while(j < i){
+        print("{i} {j}");
+        //i += 1;
+        j += 1;
+    }
+    i += 1;
+}
