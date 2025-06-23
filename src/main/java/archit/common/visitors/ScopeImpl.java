@@ -56,11 +56,14 @@ public class ScopeImpl implements Scope {
     }
 
     @Override
-    public Variable resolveVariable(String name) {
+    public Variable resolveVariable(String name, int depth) {
         if (variables.containsKey(name)) {
+            if (depth > 0) {
+                return parent.resolveVariable(name, depth - 1);
+            }
             return variables.get(name);
         }
-        return parent.resolveVariable(name);
+        return parent.resolveVariable(name, depth);
     }
 
     @Override

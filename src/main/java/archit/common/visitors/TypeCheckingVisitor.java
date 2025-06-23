@@ -92,7 +92,8 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     @Override
     public Type visitAssignStat(ArchitParser.AssignStatContext ctx) {
         String name = ctx.symbol().getText();
-        Scope.Variable varRes = currentScope.resolveVariable(name);
+        int parentLevels = ctx.symbol().children.size() - 1;
+        Scope.Variable varRes = currentScope.resolveVariable(name, parentLevels);
         if (varRes == null) {
             throw new ScriptException(run, NAME_ERROR, ctx.symbol(), "Variable '{}' not defined", name);
         }
@@ -165,7 +166,8 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     @Override
     public Type visitSymbol(ArchitParser.SymbolContext ctx) {
         String name = ctx.ID().getText();
-        Scope.Variable varRes = currentScope.resolveVariable(name);
+        int parentLevels = ctx.children.size() - 1;
+        Scope.Variable varRes = currentScope.resolveVariable(name, parentLevels);
         if (varRes == null) {
             throw new ScriptException(run, NAME_ERROR, ctx, "Variable '{}' not defined", name);
         }
