@@ -484,7 +484,7 @@ Aby odwołać się do zmiennej z zasięgu zewnętrznego, wystarczy użyć jej na
     ### Przykład:
 
     ``` 
-    toRadians(deg: real): real
+    to_radians(deg: real): real
     ```
 
 07. `to_degrees`
@@ -494,7 +494,7 @@ Aby odwołać się do zmiennej z zasięgu zewnętrznego, wystarczy użyć jej na
     ### Przykład:
 
     ```
-    toDegrees(rad: real): real
+    to_degrees(rad: real): real
     ```
 
 08. `args`
