@@ -41,7 +41,7 @@
     $ ./gradlew runClient # LUB ./gradlew runServer
     ```
 
-### Jako samodzielny program, najnowsza wersja
+### Jako samodzielny program, najnowsza wersja języka
 
 - Pobierz najnowszy plik JAR z [GitHub Actions](https://github.com/Kacper0510/archit/actions?query=branch%3Amaster)
 
@@ -115,6 +115,14 @@ Komendy do testowania skryptów:
     W powyższym przykładzie każdy krok wywołania funkcji będzie opóźniony o $5 \cdot 50 = 250 \, \text{ms}$, a do skryptu zostaną przekazane trzy argumenty.
 
 Dzięki tym trzem komendom możesz w prosty sposób uruchamiać, zatrzymywać i wizualizować swoje skrypty `archit`.
+
+## "Hello, World!"
+
+Poniżej znajduje się najprostszy skrypt w języku `archit`, który wypisuje komunikat "Hello, World!" na chacie Minecrafta:
+
+```
+print 'Hello, World!';
+```
 
 ## Zastosowanie języka
 
@@ -765,7 +773,9 @@ Aby odwołać się do zmiennej z zasięgu zewnętrznego, wystarczy użyć jej na
     round(value: real): number
     ```
 
-## Przykładowy skrypt
+## Przykładowe skrypty
+
+Silnia:
 
 ```
 function factorial_it(x: number): number {
@@ -786,3 +796,5 @@ function factorial_rec(x: number): number {
 
 print "{factorial_it(5)} {factorial_rec(5)}";
 ```
+
+Po więcej przykładów możesz sięgnąć do folderu [`examples` w repozytorium](https://github.com/Kacper0510/archit/tree/master/examples).
