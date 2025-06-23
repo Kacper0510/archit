@@ -77,6 +77,11 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     @Override
     public Type visitVarDecl(ArchitParser.VarDeclContext ctx) {
         String name = ctx.symbol().getText();
+        if (name.contains("~")) {
+            throw new ScriptException(
+                run, NAME_ERROR, ctx.symbol(), "Variable declarations cannot use '~'"
+            );
+        }
         Type declared = visit(ctx.type());
         // check initializer
         Type init = ctx.expr() != null ? visit(ctx.expr()) : visit(ctx.functionCallNoBrackets());
@@ -179,20 +184,20 @@ public class TypeCheckingVisitor extends ArchitParserBaseVisitor<Type> {
     @Override
     public Type visitSymbol(ArchitParser.SymbolContext ctx) {
         String name = ctx.ID().getText();
-        Scope.Variable varRes = currentScope.resolveVariable(name);
+        int parentLevels = ctx.children.size() - 1;
+        Scope.Variable varRes = currentScope.resolveVariable(name, parentLevels);
         if (varRes == null) {
             var suggestions = currentScope.getLevenshteinSuggestions(name);
-            suggestions.remove(name);
-            if (suggestions.isEmpty()) {
-                throw new ScriptException(
-                    run, NAME_ERROR, ctx, "Variable '{}' not defined or too many '~' prefixes", name
-                );
+            if (suggestions.contains(name)) {
+                throw new ScriptException(run, NAME_ERROR, ctx, "Too many '~' prefixes");
+            } else if (suggestions.isEmpty()) {
+                throw new ScriptException(run, NAME_ERROR, ctx, "Variable '{}' not defined", name);
             } else {
                 throw new ScriptException(
                     run,
                     NAME_ERROR,
                     ctx,
-                    "Variable '{}' not defined or too many '~' prefixes - did you mean any of these: {}",
+                    "Variable '{}' not defined - did you mean any of these: {}",
                     name,
                     String.join(", ", suggestions)
                 );

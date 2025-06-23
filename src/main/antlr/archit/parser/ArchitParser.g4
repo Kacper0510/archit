@@ -25,7 +25,7 @@ returnStat: RETURN (expr | functionCallNoBrackets)? SEMICOLON;
 scopeStat: CURLY_OPEN statement* CURLY_CLOSE;
 
 // Variables
-symbol: ID;
+symbol: (PARENT)* ID;
 varDecl
     : VAR symbol COLON type ASSIGN (expr | functionCallNoBrackets) SEMICOLON;
 assignStat

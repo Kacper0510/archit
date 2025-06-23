@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 public interface Scope {
     ArchitFunction resolveFunction(String name, Type[] params);
-    Variable resolveVariable(String name);
+    Variable resolveVariable(String name, int depth);
     boolean defineVariable(String name, Type type, int id, VarDeclContext ctx);
     boolean defineVariable(String name, Type type, int id, FunctionParamContext ctx);
     boolean defineFunction(String name, Type returnType, Type[] params, String[] paramNames, FunctionDeclContext ctx);

@@ -244,7 +244,7 @@ public class StandardLibrary implements Scope {
     }
 
     @Override
-    public Variable resolveVariable(String name) {
+    public Variable resolveVariable(String name, int depth) {
         return null;
     }
 

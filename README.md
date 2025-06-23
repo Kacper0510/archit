@@ -1,7 +1,12 @@
 # archit
 Minecraft scripting language for automated structure generation, an AGH UST compilers project.
 
-## How to run
+## Documentation
+
+- User Guide: &nbsp;&nbsp; **[English] &nbsp;&nbsp; [[Polski]](docs/user_guide_pl.md)**
+- Technical Documentation: &nbsp;&nbsp; **[English] &nbsp;&nbsp; [[Polski]](docs/technical_pl.md)**
+
+## `TL;DR`: How to run
 `archit` supports two modes of operation:
 1. As a Minecraft mod, which allows you to run scripts in the game and watch results in real time.
 2. As a standalone program, which allows you to run scripts from the terminal and export results to a 3D object.
